@@ -74,6 +74,19 @@
         }
       ],
       "type": "rprompt"
+    },
+{
+      "alignment": "left",
+      "newline": true,
+      "segments": [
+        {
+          "foreground": "#007ACC",
+          "style": "plain",
+          "template": "\u279c ",
+          "type": "text"
+        }
+      ],
+      "type": "prompt"
     }
   ],
   "final_space": true,

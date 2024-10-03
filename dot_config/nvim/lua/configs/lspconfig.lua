@@ -4,7 +4,7 @@ require("nvchad.configs.lspconfig").defaults()
 local lspconfig = require "lspconfig"
 
 -- EXAMPLE
-local servers = { "html", "cssls", "pyre", "ts_ls" }
+local servers = { "html", "cssls", "pyre", "ts_ls", "clangd" }
 local nvlsp = require "nvchad.configs.lspconfig"
 
 -- lsps with default config
@@ -26,6 +26,7 @@ lspconfig.omnisharp.setup {
     useModernNet = true, -- Optional but can help with compatibility
   },
 }
+
 -- configuring single server, example: typescript
 -- lspconfig.ts_ls.setup {
 --   on_attach = nvlsp.on_attach,
