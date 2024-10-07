@@ -3,7 +3,7 @@ working_directory = "None"
 
 # Themes --
 import = [ 
-  "~/.config/alacritty/dracula.toml",
+  "~/.config/alacritty/catppuccin-mocha.toml",
   "~/.config/alacritty/keybinds.toml"
 ]
 
@@ -11,8 +11,8 @@ import = [
 title = "Alacritty"
 startup_mode = "Fullscreen"
 # decorations = "none"
-blur = true
-opacity = 0.9
+# blur = true
+# opacity = 0.9
 padding.x = 10
 padding.y = 10
 
