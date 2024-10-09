@@ -3,3 +3,6 @@
 # Added by Toolbox App
 export PATH="$PATH:/home/stefantacu/.local/share/JetBrains/Toolbox/scripts"
 
+
+[ -f "/home/stefantacu/.ghcup/env" ] && . "/home/stefantacu/.ghcup/env" # ghcup-env
+. "$HOME/.cargo/env"

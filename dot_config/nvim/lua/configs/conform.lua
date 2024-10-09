@@ -3,7 +3,10 @@ local options = {
     lua = { "stylua" },
     css = { "prettier" },
     html = { "prettier" },
+    json = { "prettier" },
     python = { "black" },
+    sql = { "sqlfmt" },
+    haskell = { "fourmolu" },
   },
 
   format_on_save = {

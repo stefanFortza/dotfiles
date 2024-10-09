@@ -1,4 +1,33 @@
 return {
+  { "catppuccin/nvim", name = "catppuccin", priority = 1000 },
+  {
+    "michaelb/sniprun",
+    branch = "master",
+
+    build = "sh install.sh",
+    -- do 'sh install.sh 1' if you want to force compile locally
+    -- (instead of fetching a binary from the github release). Requires Rust >= 1.65
+
+    config = function()
+      require("sniprun").setup {
+        -- your options
+      }
+    end,
+  },
+  {
+    "CRAG666/code_runner.nvim",
+    keys = {
+      {
+        "<leader><leader>",
+        function()
+          require("code_runner").run_code()
+        end,
+        desc = "[e]xcute code",
+      },
+    },
+    config = true,
+    filetype_path = vim.fn.expand "~/.config/nvim/code_runner.json",
+  },
   { -- This plugin
     "Zeioth/compiler.nvim",
     cmd = { "CompilerOpen", "CompilerToggleResults", "CompilerRedo" },
@@ -19,10 +48,8 @@ return {
     },
   },
   {
-    "nvim-neotest/nvim-nio",
-  },
-  {
     "rcarriga/nvim-dap-ui",
+    event = "VeryLazy",
     dependencies = "mfussenegger/nvim-dap",
     config = function()
       local dap = require "dap"
@@ -41,8 +68,8 @@ return {
   },
   {
     "mfussenegger/nvim-dap",
-    config = function(_, opts)
-      -- require("core.utils").load_mappings "dap"
+    config = function()
+      require "configs.dap.init"
     end,
   },
   {
@@ -55,17 +82,9 @@ return {
     },
     config = function(_, opts)
       local path = "~/.local/share/nvim/mason/packages/debugpy/venv/bin/python"
-      require("dap-python").setup(path)
-      -- require("core.utils").load_mappings "dap_python"
+      require("dap-python").setup "python"
     end,
   },
-  -- {
-  --   "nvimtools/none-ls.nvim",
-  --   ft = { "python" },
-  --   opts = function()
-  --     return require "custom.configs.null-ls"
-  --   end,
-  -- },
   {
     "stevearc/conform.nvim",
     event = "BufWritePre", -- uncomment for format on save
@@ -114,6 +133,9 @@ return {
         "css-lsp",
         "prettier",
         "pyre",
+        "clangd",
+        "clang-format",
+        "codelldb",
       },
     },
   },
