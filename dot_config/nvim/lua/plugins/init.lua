@@ -1,18 +1,9 @@
 return {
-  { "catppuccin/nvim", name = "catppuccin", priority = 1000 },
+  -- Lua
   {
-    "michaelb/sniprun",
-    branch = "master",
-
-    build = "sh install.sh",
-    -- do 'sh install.sh 1' if you want to force compile locally
-    -- (instead of fetching a binary from the github release). Requires Rust >= 1.65
-
-    config = function()
-      require("sniprun").setup {
-        -- your options
-      }
-    end,
+    "folke/zen-mode.nvim",
+    opts = {},
+    config = true,
   },
   {
     "CRAG666/code_runner.nvim",
@@ -46,44 +37,6 @@ return {
         default_detail = 1,
       },
     },
-  },
-  {
-    "rcarriga/nvim-dap-ui",
-    event = "VeryLazy",
-    dependencies = "mfussenegger/nvim-dap",
-    config = function()
-      local dap = require "dap"
-      local dapui = require "dapui"
-      dapui.setup()
-      dap.listeners.after.event_initialized["dapui_config"] = function()
-        dapui.open()
-      end
-      dap.listeners.before.event_terminated["dapui_config"] = function()
-        dapui.close()
-      end
-      dap.listeners.before.event_exited["dapui_config"] = function()
-        dapui.close()
-      end
-    end,
-  },
-  {
-    "mfussenegger/nvim-dap",
-    config = function()
-      require "configs.dap.init"
-    end,
-  },
-  {
-    "mfussenegger/nvim-dap-python",
-    ft = "python",
-    dependencies = {
-      "mfussenegger/nvim-dap",
-      "rcarriga/nvim-dap-ui",
-      "nvim-neotest/nvim-nio",
-    },
-    config = function(_, opts)
-      local path = "~/.local/share/nvim/mason/packages/debugpy/venv/bin/python"
-      require("dap-python").setup "python"
-    end,
   },
   {
     "stevearc/conform.nvim",
@@ -144,6 +97,15 @@ return {
     event = "VeryLazy",
     config = function()
       require("nvim-surround").setup {}
+    end,
+  },
+  {
+    "nvim-tree/nvim-tree.lua",
+    cmd = { "NvimTreeToggle", "NvimTreeFocus" },
+    opts = function()
+      local config = require "nvchad.configs.nvimtree"
+      config.filters.dotfiles = true
+      return config
     end,
   },
 }

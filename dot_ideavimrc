@@ -2,3 +2,4 @@ set clipboard=unnamedplus
 :set relativenumber
 Plug 'tpope/vim-surround'
 
+set clipboard^=ideaput
