@@ -436,6 +436,7 @@ alias l.='exa -a | egrep "^\."'
 alias vz='NVIM_APPNAME=nvim-vscode/lazy-nvim nvim'
 alias ts='tmux source ~/.config/tmux/tmux.conf'
 alias shy='sudo sh ~/bin/switch-hypervizor.sh'
+alias mysudo='sudo -E env "PATH=$PATH"'
 
 # User configuration
 
@@ -468,8 +469,21 @@ eval "$(zoxide init zsh)"
 export DOCKER_CONFIG=$HOME/.docker
 
 path=('/home/stefantacu/.local/bin/' $path)
+path=('/var/lib/snapd/snap/bin' $path)
+path=('/usr/local/texlive/2024/bin/x86_64-linux' $path)
+export MANPATH=$MANPATH:/usr/local/texlive/2024/texmf-dist/doc/man
+export INFOPATH=$INFOPATH:/usr/local/texlive/2024/texmf-dist/doc/info
+
 # path=('$HOME/bin' $path) 
 
 . "$HOME/.cargo/env"
 # export to sub-processes (make it inherited by child processes)
+export PATH="$PATH:/home/stefantacu/.dotnet/tools"
+
+PATH="/home/stefantacu/perl5/bin${PATH:+:${PATH}}"; export PATH;
+PERL5LIB="/home/stefantacu/perl5/lib/perl5${PERL5LIB:+:${PERL5LIB}}"; export PERL5LIB;
+PERL_LOCAL_LIB_ROOT="/home/stefantacu/perl5${PERL_LOCAL_LIB_ROOT:+:${PERL_LOCAL_LIB_ROOT}}"; export PERL_LOCAL_LIB_ROOT;
+PERL_MB_OPT="--install_base \"/home/stefantacu/perl5\""; export PERL_MB_OPT;
+PERL_MM_OPT="INSTALL_BASE=/home/stefantacu/perl5"; export PERL_MM_OPT;
+
 export PATH

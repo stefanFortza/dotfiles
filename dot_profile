@@ -3,6 +3,9 @@
 # Added by Toolbox App
 export PATH="$PATH:/home/stefantacu/.local/share/JetBrains/Toolbox/scripts"
 
+export PATH="$PATH:/usr/local/texlive/2024/bin/x86_64-linux:/var/lib/snapd/snap/bin:/home/stefantacu/.local/bin:/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:/home/stefantacu/.pyenv/plugins/pyenv-virtualenv/shims:/home/stefantacu/.pyenv/shims:/home/stefantacu/.pyenv/bin:/home/stefantacu/.zplug/bin:/home/stefantacu/.local/share/pnpm:/home/stefantacu/.config/nvm/versions/node/v18.20.4/bin:/home/stefantacu/.cargo/bin:/usr/local/sbin:/usr/local/bin:/usr/bin:/var/lib/flatpak/exports/bin:/usr/lib/jvm/default/bin:/usr/bin/site_perl:/usr/bin/vendor_perl:/usr/bin/core_perl:/home/stefantacu/.cabal/bin:/home/stefantacu/.ghcup/bin"
 
 [ -f "/home/stefantacu/.ghcup/env" ] && . "/home/stefantacu/.ghcup/env" # ghcup-env
 . "$HOME/.cargo/env"
+
+alias mysudo='sudo -E env "PATH=$PATH"'
