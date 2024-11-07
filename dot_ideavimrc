@@ -12,7 +12,7 @@ set hlsearch
 set visualbell
 
 " Clipboard Integration
-set clipboard+=unnamed
+set clipboard+=unnamedplus
 
 " Leader Key
 let mapleader="\<space>"
@@ -70,6 +70,8 @@ let g:WhichKey_ShowTypedSequence = "false"
 " Tab navigation
 nmap <C-p> <Action>(PreviousTab)
 nmap <C-n> <Action>(NextTab)
+nmap <tab> <Action>(NextTab)
+nmap <S-tab> <Action>(PreviousTab)
 
 " Pane navigation
 nnoremap <C-h> <C-w>h
@@ -95,6 +97,8 @@ nmap <C-S-m> <Action>(ToolWindowsGroup)
 
 " Clear Search Highlighitng
 nnoremap <C-[> :noh<return>
+
+inoremap jk <Esc>
 
 
 "" ========================================================
@@ -154,7 +158,8 @@ nmap <leader>tg6 <Action>(GoToTab6)
 nmap <leader>tg7 <Action>(GoToTab7)
 nmap <leader>tg8 <Action>(GoToTab8)
 nmap <leader>tg9 <Action>(GoToTab9)
-nmap <leader>tx <Action>(CloseContent)
+"modified
+nmap <leader>x <Action>(CloseContent)
 nmap <leader>tX <Action>(CloseAllEditors)
 nmap <leader>to <Action>(CloseAllEditorsButActive)
 nmap <leader>ta <Action>(CloseAllUnpinnedEditors)
@@ -170,7 +175,7 @@ let g:WhichKeyDesc_tabs_go_to_6 = "<leader>tg6 Go to Tab 6"
 let g:WhichKeyDesc_tabs_go_to_7 = "<leader>tg7 Go to Tab 7"
 let g:WhichKeyDesc_tabs_go_to_8 = "<leader>tg8 Go to Tab 8"
 let g:WhichKeyDesc_tabs_go_to_9 = "<leader>tg9 Go to Tab 9"
-let g:WhichKeyDesc_tabs_close = "<leader>tx Close Current Tab"
+let g:WhichKeyDesc_tabs_close = "<leader>x Close Current Tab"
 let g:WhichKeyDesc_tabs_close_all = "<leader>tX Close All Tabs"
 let g:WhichKeyDesc_tabs_close_all_but_active = "<leader>to Close All Tabs But Active"
 let g:WhichKeyDesc_tabs_close_all_unpinned = "<leader>ta Close All Unpinned Tabs"
@@ -194,6 +199,7 @@ nmap <leader>fc <Action>(FindInPath)
 nmap <leader>fl <Action>(RecentLocations)
 nmap <leader>fs <Action>(NewScratchFile)
 nmap <leader>fe :NERDTreeToggle<CR>
+nmap <S-b> :NERDTreeToggle<CR>
 nmap <leader>fo <Action>(OpenFile)
 nmap <leader>fy <Action>(CopyAbsolutePath)
 nmap <leader>fp <Action>(ManageRecentProjects)

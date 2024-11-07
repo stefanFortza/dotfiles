@@ -85,5 +85,11 @@ nmap <S-Tab> :Tabprev<CR>
 " Map 'jk' to exit insert mode
 
 set clipboard=unnamedplus
+call plug#begin()
+
+" List your plugins here
+Plug 'justinmk/vim-sneak'
+
+call plug#end()
 
 source ~/.config/nvim-vscode/surround.vim

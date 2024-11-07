@@ -1,11 +1,20 @@
 return {
   {
+    "justinmk/vim-sneak",
+    lazy = false,
+    config = function()
+      -- Optional: Add any additional custom configuration for Sneak here
+    end,
+  },
+  {
     "lervag/vimtex",
     lazy = false, -- we don't want to lazy load VimTeX
     -- tag = "v2.15", -- uncomment to pin to a specific release
     init = function()
       -- VimTeX configuration goes here, e.g.
-      vim.g.vimtex_view_method = "zathura"
+      -- vim.g.vimtex_view_method = "firefox"
+      vim.g.vimtex_view_method = "general"
+      vim.g.vimtex_view_general_viewer = "okular"
     end,
   },
   -- Lua
@@ -16,15 +25,7 @@ return {
   },
   {
     "CRAG666/code_runner.nvim",
-    keys = {
-      {
-        "<leader><leader>",
-        function()
-          require("code_runner").run_code()
-        end,
-        desc = "[e]xcute code",
-      },
-    },
+    lazy = false,
     config = true,
     filetype_path = vim.fn.expand "~/.config/nvim/code_runner.json",
   },
