@@ -85,6 +85,8 @@ nmap <S-Tab> :Tabprev<CR>
 " Map 'jk' to exit insert mode
 
 set clipboard=unnamedplus
+
+source ~/.local/share/nvim/site/autoload/plug.vim
 call plug#begin()
 
 " List your plugins here

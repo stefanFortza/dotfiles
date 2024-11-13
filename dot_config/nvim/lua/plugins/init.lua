@@ -13,8 +13,13 @@ return {
     init = function()
       -- VimTeX configuration goes here, e.g.
       -- vim.g.vimtex_view_method = "firefox"
+      vim.g.vimtex_compiler_method = "latexmk"
       vim.g.vimtex_view_method = "general"
       vim.g.vimtex_view_general_viewer = "okular"
+      vim.g.vimtex_compiler_latexmk = {
+        executable = "latexmk",
+        options = { "-pdf", "-lualatex" }, -- Use LuaLaTeX
+      }
     end,
   },
   -- Lua
