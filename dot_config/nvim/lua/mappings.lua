@@ -37,3 +37,5 @@ map({ "n" }, "<S-F7>", "<cmd>CompilerToggleResults<cr>", { noremap = true, silen
 
 map({ "n" }, "<leader>rh", "<cmd>!runghc %<cr>", { noremap = true, silent = true })
 map({ "n" }, "<leader>rd", "<cmd>!dotnet run <cr>", { noremap = true, silent = true })
+
+map({ "n" }, "<leader><leader>", "<cmd>RunCode <cr>", { noremap = true, silent = true })
