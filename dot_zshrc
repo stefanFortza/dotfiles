@@ -434,7 +434,6 @@ alias l='exa -F --icons --color=always --group-directories-first'
 alias l.='exa -a | egrep "^\."'
 
 alias vz='NVIM_APPNAME=nvim-vscode/lazy-nvim nvim'
-alias ts='tmux source ~/.config/tmux/tmux.conf'
 alias shy='sudo sh ~/bin/switch-hypervizor.sh'
 alias mysudo='sudo -E env "PATH=$PATH"'
 
