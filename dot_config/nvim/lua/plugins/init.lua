@@ -18,7 +18,13 @@ return {
       vim.g.vimtex_view_general_viewer = "okular"
       vim.g.vimtex_compiler_latexmk = {
         executable = "latexmk",
-        options = { "-pdf", "-lualatex" }, -- Use LuaLaTeX
+        build_dir = "", -- Optional: Use a build directory
+        options = {
+          "-shell-escape", -- Enable shell escape
+          "-synctex=1", -- Enable SyncTeX
+          "-pdf",
+          "-lualatex",
+        },
       }
     end,
   },
@@ -88,6 +94,7 @@ return {
         "python",
         "toml",
         "c_sharp",
+        "haskell",
       },
     },
   },
