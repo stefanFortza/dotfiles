@@ -82,9 +82,16 @@ nmap gcc <Plug>VSCodeCommentaryLine
 nmap <Tab> :Tabnext<CR>
 nmap <S-Tab> :Tabprev<CR>
 
+" In visual mode, paste preserves original yanked text
+vnoremap p "_dP
+
+" Remove highlighting after escaping vim search
+nnoremap <Esc> <Esc>:noh<CR>
+
 " Map 'jk' to exit insert mode
 
 set clipboard=unnamedplus
+set cmdheight=4
 
 source ~/.local/share/nvim/site/autoload/plug.vim
 call plug#begin()

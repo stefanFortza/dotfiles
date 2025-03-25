@@ -453,8 +453,8 @@ eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
 # pnpm
 export PNPM_HOME="/home/stefantacu/.local/share/pnpm"
 case ":$PATH:" in
-*":$PNPM_HOME:"*) ;;
-*) export PATH="$PNPM_HOME:$PATH" ;;
+  *":$PNPM_HOME:"*) ;;
+  *) export PATH="$PNPM_HOME:$PATH" ;;
 esac
 # pnpm end
 #
@@ -495,3 +495,10 @@ export NVM_DIR="$HOME/.config/nvm"
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
 
 [ -f "/home/stefantacu/.ghcup/env" ] && . "/home/stefantacu/.ghcup/env" # ghcup-env
+
+# bun completions
+[ -s "/home/stefantacu/.bun/_bun" ] && source "/home/stefantacu/.bun/_bun"
+
+# bun
+export BUN_INSTALL="$HOME/.bun"
+export PATH="$BUN_INSTALL/bin:$PATH"

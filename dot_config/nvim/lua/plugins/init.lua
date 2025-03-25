@@ -1,5 +1,20 @@
 return {
   {
+    "github/copilot.vim",
+    event = "InsertEnter",
+    config = function()
+      -- Disable default `<Tab>` mapping to avoid conflicts
+      vim.g.copilot_no_tab_map = true
+      -- Set custom keybinding for accepting suggestions
+      vim.api.nvim_set_keymap("i", "<C-J>", 'copilot#Accept("<CR>")', { expr = true, silent = true })
+    end,
+  },
+  {
+    "mrcjkb/rustaceanvim",
+    version = "^5", -- Recommended
+    lazy = false, -- This plugin is already lazy
+  },
+  {
     "justinmk/vim-sneak",
     lazy = false,
     config = function()
@@ -75,6 +90,19 @@ return {
     },
     lazy = false,
   },
+  -- Add nvim-dap
+  {
+    "mfussenegger/nvim-dap",
+    lazy = false,
+  },
+
+  -- Optional: Virtual text for breakpoints
+  {
+    "theHamsta/nvim-dap-virtual-text",
+    config = function()
+      require("nvim-dap-virtual-text").setup()
+    end,
+  },
   -- These are some examples, uncomment them if you want to see them work!
   {
     "neovim/nvim-lspconfig",
@@ -111,6 +139,7 @@ return {
         "clangd",
         "clang-format",
         "codelldb",
+        "rust-analyzer",
       },
     },
   },
