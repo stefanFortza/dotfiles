@@ -587,3 +587,5 @@ eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
 eval "$(oh-my-posh init bash)"
 # alias ls="logo-ls"
 . "$HOME/.cargo/env"
+
+export ANDROID_HOME=/home/stefantacu/Android/Sdk
