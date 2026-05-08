@@ -422,7 +422,7 @@ web-search
 pip
 nvm
 jsontools
-
+direnv
 )
 
 plugins+=(zsh-vi-mode)
@@ -538,3 +538,13 @@ if [ -d "$FNM_PATH" ]; then
   export PATH="/home/stefantacu/.local/share/fnm:$PATH"
   eval "`fnm env`"
 fi
+
+. "$HOME/.local/share/../bin/env"
+
+#THIS MUST BE AT THE END OF THE FILE FOR SDKMAN TO WORK!!!
+# export SDKMAN_DIR="$HOME/.sdkman"
+# [[ -s "$HOME/.sdkman/bin/sdkman-init.sh" ]] && source "$HOME/.sdkman/bin/sdkman-init.sh"
+
+# Music Player Service Config
+export MUSIC_SERVICE_DIR="/home/stefantacu/github/music-player-service"
+source $MUSIC_SERVICE_DIR/aliases.sh

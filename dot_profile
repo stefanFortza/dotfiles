@@ -12,3 +12,5 @@ alias mysudo='sudo -E env "PATH=$PATH"'
 export ANDROID_HOME=/home/stefantacu/Android/Sdk
 
 [ -f "/home/stefantacu/.ghcup/env" ] && . "/home/stefantacu/.ghcup/env" # ghcup-env
+
+. "$HOME/.local/share/../bin/env"
