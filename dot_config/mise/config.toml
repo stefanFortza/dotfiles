@@ -12,6 +12,8 @@ ast-grep = "latest"
 starship = "latest"
 go = "latest"
 node = "lts"
+bun = "latest"
+pnpm = "latest"
 
 [settings]
 auto_install = true
