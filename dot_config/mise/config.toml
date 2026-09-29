@@ -1,11 +1,25 @@
 [tools]
 fd = "latest"
-fzf = "latest"
-go = "latest"
-jq = "latest"
 ripgrep = "latest"
-yazi = "latest"
+jq = "latest"
+fzf = "latest"
 zoxide = "latest"
+yazi = "latest"
+eza = "latest"
+bat = "latest"
+lazygit = "latest"
+ast-grep = "latest"
+starship = "latest"
+go = "latest"
+node = "lts"
 
 [settings]
-auto_update = true
+auto_install = true
+not_found_auto_install = true
+yes = true
+jobs = 4
+raw = false
+activate_aggressive = true
+
+[env]
+PAGER = "bat --plain"
