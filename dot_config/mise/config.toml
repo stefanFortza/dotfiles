@@ -1,0 +1,11 @@
+[tools]
+fd = "latest"
+fzf = "latest"
+go = "latest"
+jq = "latest"
+ripgrep = "latest"
+yazi = "latest"
+zoxide = "latest"
+
+[settings]
+auto_update = true
