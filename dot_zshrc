@@ -7,7 +7,6 @@ typeset -U path PATH
 path=(
   "$HOME/.local/bin"
   "$HOME/.cargo/bin"
-  "$HOME/.bun/bin"
   "$HOME/.opencode/bin"
   "$HOME/.pub-cache/bin"
   "/usr/local/texlive/2024/bin/x86_64-linux"
@@ -17,11 +16,18 @@ path=(
 )
 export PATH
 
+# Activare Mise (injecteaza automat runtime-urile in PATH inainte de alte tool-uri)
+if command -v mise >/dev/null 2>&1; then
+  eval "$(mise activate zsh)"
+elif [[ -x "$HOME/.local/bin/mise" ]]; then
+  eval "$("$HOME/.local/bin/mise" activate zsh)"
+fi
+
 # Completions path
 [[ -d "$HOME/.zsh/completions" ]] && fpath=("$HOME/.zsh/completions" $fpath)
 
 # =======================================================
-# 2. EXPORTS NATIVE ZSH
+# 2. EXPORTS NATIVE ZSH & ENVIRONMENT
 # =======================================================
 export HISTFILE="$HOME/.zsh_history"
 export HISTSIZE=10000
@@ -40,8 +46,6 @@ export VISUAL='nvim'
 export CLICOLOR=1
 export DOCKER_CONFIG="$HOME/.docker"
 export ANDROID_HOME="$HOME/Android/Sdk"
-export PNPM_HOME="$HOME/.local/share/pnpm"
-export path=("$PNPM_HOME" $path)
 
 # Less colors
 export LESS_TERMCAP_mb=$'\E[01;31m'
@@ -72,18 +76,16 @@ plugins=(
 
 source "$ZSH/oh-my-zsh.sh"
 
-
 # =======================================================
-# 4. ALIASES & SHORTCUTS
+# 4. ALIASES & UTILITIES
 # =======================================================
 # Editor & core
 alias vim='nvim'
 alias vi='nvim'
 alias ezrc='nvim ~/.zshrc'
 
-# Modern utils (ripgrep, batcat pe Ubuntu, eza)
+# Modern CLI utils
 command -v rg >/dev/null 2>&1 && alias grep='rg'
-command -v batcat >/dev/null 2>&1 && alias cat='batcat'
 command -v bat >/dev/null 2>&1 && alias cat='bat'
 
 alias ls='eza --icons --color=always --group-directories-first'
@@ -96,47 +98,27 @@ alias cp='cp -i'
 alias mv='mv -i'
 alias mkdir='mkdir -p'
 alias cls='clear'
-alias kssh="kitty +kitten ssh"
+alias lg='lazygit'
 
 # Git helpers
 alias gcom='git add . && git commit -m'
 lazyg() { git add . && git commit -m "$1" && git push; }
 
 # =======================================================
-# 5. RUNTIME MANAGERS (OPTIMIZATE)
+# 5. INTEGRATIONS & PROMPT
 # =======================================================
-
-# Bun completions
-[ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"
-
-# Zoxide & Prompt
-eval "$(zoxide init zsh)"
-eval "$(starship init zsh)"
-# External script configs (daca exista)
-[[ -f "$HOME/github/music-player-service/aliases.sh" ]] && source "$HOME/github/music-player-service/aliases.sh"
-
-# =======================================================
-# FZF & FD CONFIGURATION
-# =======================================================
-# Seteaza fd ca backend implicit pentru fzf (ignora .git, respecta .gitignore)
+# FZF config & native shell bindings
 if command -v fd >/dev/null 2>&1; then
   export FZF_DEFAULT_COMMAND='fd --type f --strip-cwd-prefix --hidden --follow --exclude .git'
   export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
   export FZF_ALT_C_COMMAND='fd --type d --strip-cwd-prefix --hidden --follow --exclude .git'
 fi
 
-# Aspect vizual fzf
 export FZF_DEFAULT_OPTS="--height 40% --layout=reverse --border --inline-info --color=dark"
 
-# Incarcare keybindings oficiale fzf pentru Zsh (Ctrl+R, Ctrl+T, Alt+C)
-if [ -f /usr/share/doc/fzf/examples/key-bindings.zsh ]; then
-  source /usr/share/doc/fzf/examples/key-bindings.zsh
-  source /usr/share/doc/fzf/examples/completion.zsh
-fi
+command -v fzf >/dev/null 2>&1 && eval "$(fzf --zsh)"
+command -v zoxide >/dev/null 2>&1 && eval "$(zoxide init zsh)"
+command -v starship >/dev/null 2>&1 && eval "$(starship init zsh)"
 
-# =======================================================
-# ALIASES & HELPERS (LAZYGIT)
-# =======================================================
-alias lg='lazygit'
-
-eval "$(/home/stefantacu/.local/bin/mise activate zsh)" # added by https://mise.run/zsh
+# External script configs (daca exista)
+[[ -f "$HOME/github/music-player-service/aliases.sh" ]] && source "$HOME/github/music-player-service/aliases.sh"
