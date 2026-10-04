@@ -1,12 +1,11 @@
 # 1. Non-interactive guard (pentru scp, rsync, scripturi automate)
-case $- in
-*i*) ;;
+case $- in *i*) ;;
 *) return ;;
 esac
 
-# 2. Hand-off catre Fish pentru sesiuni interactive de terminal
-if [ -x /usr/bin/fish ]; then
-  exec /usr/bin/fish
+# 2. Hand-off sigur catre Fish doar daca rulam intr-un terminal interactiv (TTY)
+if [[ $- == *i* ]] && [ -t 0 ] && command -v fish >/dev/null 2>&1; then
+  exec fish
 fi
 
 # ==============================================================================
