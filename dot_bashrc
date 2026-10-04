@@ -1,173 +1,39 @@
-# =======================================================
-# 1. NON-INTERACTIVE CHECK & GLOBAL DEFINITIONS
-# =======================================================
-# Daca shell-ul nu este interactiv, opreste executia imediat (viteza maxima pentru scripturi/scp)
+# 1. Non-interactive guard (pentru scp, rsync, scripturi automate)
 case $- in
 *i*) ;;
 *) return ;;
 esac
 
-# Source global definitions
-[ -f /etc/bashrc ] && . /etc/bashrc
+# 2. Hand-off catre Fish pentru sesiuni interactive de terminal
+if [ -x /usr/bin/fish ]; then
+  exec /usr/bin/fish
+fi
 
-# =======================================================
-# 2. SHELL OPTIONS & HISTORY
-# =======================================================
-# Corectare automata a cailor si actualizare dimensiuni terminal
-shopt -s checkwinsize
-shopt -s cdspell
-shopt -s dirspell
-shopt -s histappend
+# ==============================================================================
+# Fallback Bash (se executa doar daca Fish nu este instalat sau e apelat explicit)
+# ==============================================================================
 
-# Gestionare istoric eficienta
-export HISTFILE="$HOME/.bash_history"
-export HISTSIZE=10000
-export HISTFILESIZE=20000
-export HISTCONTROL=ignoreboth:erasedups
-export HISTTIMEFORMAT="%F %T "
-PROMPT_COMMAND='history -a'
+# Istoric si optiuni de baza
+shopt -s checkwinsize histappend
+HISTSIZE=10000
+HISTFILESIZE=20000
+HISTCONTROL=ignoreboth:erasedups
 
-# Readline binds (autocompletare insensibila la majuscule)
-bind "set bell-style visible"
-bind "set completion-ignore-case on"
-bind "set show-all-if-ambiguous on"
-bind "set colored-stats on"
-bind "set mark-symlinked-directories on"
-
-# Ctrl-S / Ctrl-Q fix
-stty -ixon
-
-# =======================================================
-# 3. ENVIRONMENT VARIABLES & PATHS
-# =======================================================
-# XDG Base Directory
-export XDG_CONFIG_HOME="$HOME/.config"
-export XDG_DATA_HOME="$HOME/.local/share"
-export XDG_STATE_HOME="$HOME/.local/state"
-export XDG_CACHE_HOME="$HOME/.cache"
-
-# Default Tools
+# Variabile esentiale de mediu
 export EDITOR="nvim"
 export VISUAL="nvim"
-export CLICOLOR=1
 
-# Android SDK
-export ANDROID_HOME="$HOME/Android/Sdk"
+# Integrare mise (activeaza automat shim-urile, inclusiv gh, rust, node, etc.)
+if command -v mise >/dev/null 2>&1; then
+  eval "$(mise activate bash)"
+elif [ -d "$HOME/.local/share/mise/shims" ]; then
+  export PATH="$HOME/.local/share/mise/shims:$PATH"
+fi
 
-# Constructie unificata a PATH (fara duplicate)
-_user_paths=(
-  "$HOME/.local/bin"
-  "$HOME/.cargo/bin"
-  "$HOME/.bun/bin"
-  "$HOME/.deno/bin"
-  "$HOME/.opencode/bin"
-  "$HOME/development/flutter/bin"
-  "$HOME/.pub-cache/bin"
-  "$HOME/.local/share/pnpm"
-  "$ANDROID_HOME/cmdline-tools/latest/bin"
-  "$ANDROID_HOME/platform-tools"
-  "/usr/local/texlive/2024/bin/x86_64-linux"
-  "/home/linuxbrew/.linuxbrew/bin"
-  "/home/linuxbrew/.linuxbrew/sbin"
-  "/var/lib/snapd/snap/bin"
-  "/snap/bin"
-)
+# Completari si scurtaturi rapide
+[ -f /usr/share/bash-completion/bash_completion ] && . /usr/share/bash-completion/bash_completion
 
-for p in "${_user_paths[@]}"; do
-  [[ -d "$p" && ":$PATH:" != *":$p:"* ]] && PATH="$p:$PATH"
-done
-unset _user_paths
-export PATH
-
-# Homebrew environment static (fara eval lent)
-export HOMEBREW_PREFIX="/home/linuxbrew/.linuxbrew"
-export HOMEBREW_CELLAR="/home/linuxbrew/.linuxbrew/Cellar"
-export HOMEBREW_REPOSITORY="/home/linuxbrew/.linuxbrew/Homebrew"
-export MANPATH="/home/linuxbrew/.linuxbrew/share/man:/usr/local/texlive/2024/texmf-dist/doc/man${MANPATH:+:$MANPATH}"
-export INFOPATH="/home/linuxbrew/.linuxbrew/share/info:/usr/local/texlive/2024/texmf-dist/doc/info${INFOPATH:+:$INFOPATH}"
-
-# =======================================================
-# 4. ALIASES & UTILITIES
-# =======================================================
-# Protectii native si scurtaturi comune
-alias cp='cp -i'
-alias mv='mv -i'
-alias mkdir='mkdir -p'
-alias cls='clear'
-alias kssh='kitty +kitten ssh'
-alias ebrc='nvim ~/.bashrc'
-
-# Editor
 alias vim='nvim'
 alias vi='nvim'
-
-# Modern CLI utilities
-command -v rg >/dev/null 2>&1 && alias grep='rg'
-command -v batcat >/dev/null 2>&1 && alias cat='batcat'
-command -v bat >/dev/null 2>&1 && alias cat='bat'
-command -v exa >/dev/null 2>&1 && {
-  alias ls='exa --icons --color=always --group-directories-first'
-  alias ll='exa -alF --icons --color=always --group-directories-first'
-  alias la='exa -a --icons --color=always --group-directories-first'
-  alias l='exa -F --icons --color=always --group-directories-first'
-  alias tree='tree -CAhF --dirsfirst'
-}
-
-# Git
-alias gcom='git add . && git commit -m'
-lazyg() {
-  git add .
-  git commit -m "$1"
-  git push
-}
-
-# Functie de extragere universala
-extract() {
-  if [ -f "$1" ]; then
-    case $1 in
-    *.tar.bz2) tar xvjf "$1" ;;
-    *.tar.gz) tar xvzf "$1" ;;
-    *.tar.xz) tar xvJf "$1" ;;
-    *.bz2) bunzip2 "$1" ;;
-    *.rar) unrar x "$1" ;;
-    *.gz) gunzip "$1" ;;
-    *.tar) tar xvf "$1" ;;
-    *.tbz2) tar xvjf "$1" ;;
-    *.tgz) tar xvzf "$1" ;;
-    *.zip) unzip "$1" ;;
-    *.Z) uncompress "$1" ;;
-    *.7z) 7z x "$1" ;;
-    *) echo "'$1' nu poate fi extras cu extract()" ;;
-    esac
-  else
-    echo "'$1' nu este un fisier valid"
-  fi
-}
-
-# =======================================================
-# 5. COMPLETIONS & RUNTIME MANAGERS
-# =======================================================
-# Bash completion standard
-if [ -f /usr/share/bash-completion/bash_completion ]; then
-  . /usr/share/bash-completion/bash_completion
-elif [ -f /etc/bash_completion ]; then
-  . /etc/bash_completion
-fi
-
-# FNM (Fast Node Manager)
-if [[ -d "$HOME/.local/share/fnm" ]]; then
-  eval "$(fnm env --use-on-cd --shell bash)"
-fi
-
-# Deno & Bun
-[ -s "$HOME/.deno/env" ] && . "$HOME/.deno/env"
-[ -s "$HOME/.local/share/bash-completion/completions/deno.bash" ] && . "$HOME/.local/share/bash-completion/completions/deno.bash"
-
-# SDKMAN (pastrat daca dezvolti Java/Kotlin)
-export SDKMAN_DIR="$HOME/.sdkman"
-[[ -s "$HOME/.sdkman/bin/sdkman-init.sh" ]] && source "$HOME/.sdkman/bin/sdkman-init.sh"
-
-# Fastfetch & Prompt
-command -v fastfetch >/dev/null 2>&1 && fastfetch
 command -v zoxide >/dev/null 2>&1 && eval "$(zoxide init bash)"
-command -v oh-my-posh >/dev/null 2>&1 && eval "$(oh-my-posh init bash --config ~/github/dracula.omp.json)"
+. "$HOME/.cargo/env"

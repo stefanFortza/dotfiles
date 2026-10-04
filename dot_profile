@@ -1,21 +1,27 @@
+# ~/.profile: executat la login-ul de sesiune pentru variabile globale de mediu.
 
+# 1. Variabile globale de mediu
+export EDITOR="nvim"
+export VISUAL="nvim"
+export ANDROID_HOME="$HOME/Android/Sdk"
 
-# Added by Toolbox App
-export PATH="$PATH:/home/stefantacu/.local/share/JetBrains/Toolbox/scripts"
+# 2. Constructie curata PATH (fara duplicate hardcodate)
+add_to_path() {
+  if [ -d "$1" ] && case ":$PATH:" in *":$1:"*) false ;; *) true ;; esac then
+    PATH="$1:$PATH"
+  fi
+}
 
-export PATH="$PATH:/usr/local/texlive/2024/bin/x86_64-linux:/var/lib/snapd/snap/bin:/home/stefantacu/.local/bin:/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:/home/stefantacu/.pyenv/plugins/pyenv-virtualenv/shims:/home/stefantacu/.pyenv/shims:/home/stefantacu/.pyenv/bin:/home/stefantacu/.zplug/bin:/home/stefantacu/.local/share/pnpm:/home/stefantacu/.config/nvm/versions/node/v18.20.4/bin:/home/stefantacu/.cargo/bin:/usr/local/sbin:/usr/local/bin:/usr/bin:/var/lib/flatpak/exports/bin:/usr/lib/jvm/default/bin:/usr/bin/site_perl:/usr/bin/vendor_perl:/usr/bin/core_perl:/home/stefantacu/.cabal/bin:/home/stefantacu/.ghcup/bin"
+# Unelte locale si pachete
+add_to_path "$HOME/.local/bin"
+add_to_path "$HOME/.local/share/JetBrains/Toolbox/scripts"
+add_to_path "$HOME/.local/share/pnpm"
+add_to_path "$ANDROID_HOME/cmdline-tools/latest/bin"
+add_to_path "$ANDROID_HOME/platform-tools"
+add_to_path "/home/linuxbrew/.linuxbrew/bin"
+add_to_path "/home/linuxbrew/.linuxbrew/sbin"
+add_to_path "/var/lib/snapd/snap/bin"
 
+unset -f add_to_path
+export PATH
 . "$HOME/.cargo/env"
-
-alias mysudo='sudo -E env "PATH=$PATH"'
-
-export ANDROID_HOME=/home/stefantacu/Android/Sdk
-
-[ -f "/home/stefantacu/.ghcup/env" ] && . "/home/stefantacu/.ghcup/env" # ghcup-env
-
-. "$HOME/.local/share/../bin/env"
-
-
-# Added by Antigravity CLI installer
-export PATH="/home/stefantacu/.local/bin:$PATH"
-. "/home/stefantacu/.deno/env"
