@@ -11,7 +11,6 @@ return {
       "TmuxNavigatePrevious",
     },
   },
-
   -- Compiler.nvim (F6 / S-F7)
   {
     "Zeioth/compiler.nvim",

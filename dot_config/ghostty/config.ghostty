@@ -1,0 +1,53 @@
+# Echivalentul startup_mode = "Fullscreen"
+fullscreen = true
+
+# ==============================================================================
+# 1. ENVIRONMENT & SHELL
+# ==============================================================================
+# Setează termenul pentru compatibilitate maximă cu tmux și nvim
+term = xterm-256color
+
+# Rulează direct shell-ul Fish
+command = /usr/bin/fish
+
+# ==============================================================================
+# 2. THEME & COLORS
+# ==============================================================================
+# Temele Catppuccin sunt incluse nativ în Ghostty
+theme = "Catppuccin Mocha"
+
+# ==============================================================================
+# 3. FONT & RENDERING
+# ==============================================================================
+font-family = "IosevkaTerm Nerd Font"
+font-size = 16.0
+
+# Activează randarea calitativă și ligaturile suportate de font
+font-feature = calt
+font-feature = liga
+
+# ==============================================================================
+# 4. WINDOW & LAYOUT
+# ==============================================================================
+title = "Ghostty"
+window-padding-x = 10
+window-padding-y = 10
+
+
+# ==============================================================================
+# 5. CURSOR
+# ==============================================================================
+cursor-style = bar
+cursor-style-blink = false
+
+# ==============================================================================
+# 6. INTEGRATION (CLIPBOARD & TMUX PASSTHROUGH)
+# ==============================================================================
+# Permite accesul sigur la clipboard prin secvențe OSC 52 (esențial pentru tmux + nvim)
+clipboard-read = allow
+clipboard-write = allow
+copy-on-select = true
+
+# Fără confirmări la închiderea ferestrei dacă procesul curent este tmux
+confirm-close-surface = false
+

@@ -1,0 +1,2066 @@
+[tools]
+# CLI modern utils
+fd = "latest"
+ripgrep = "latest"
+jq = "latest"
+fzf = "latest"
+zoxide = "latest"
+yazi = "latest"
+eza = "latest"
+bat = "latest"
+lazygit = "latest"
+ast-grep = "latest"
+starship = "latest"
+neovim = "latest"
+gh = "latest"
+usage = "latest"
+
+# Runtimes & Package Managers
+go = "latest"
+node = "lts"
+bun = "latest"
+pnpm = "latest"
+chezmoi = "2.73.0"
+
+[settings]
+auto_install = true
+not_found_auto_install = true
+yes = true
+jobs = 4
+raw = false
+activate_aggressive = true
+
+[env]
+PAGER = "bat --plain"
+# ~/.config/fish/config.fish
+
+# Dezactiveaza mesajul implicit de intampinare
+set -g fish_greeting
+
+fish_vi_key_bindings
+bind -M insert -m default jk backward-char force-repaint
+
+# =======================================================
+# 1. ENVIRONMENT PATHS
+# =======================================================
+# fish_add_path adauga la inceputul PATH-ului si elimina automat duplicatele
+fish_add_path -g \
+    $HOME/.local/bin \
+    $HOME/.cargo/bin \
+    $HOME/.opencode/bin \
+    $HOME/.pub-cache/bin \
+    /usr/local/texlive/2024/bin/x86_64-linux \
+    /var/lib/snapd/snap/bin \
+    /snap/bin
+
+# Completions custom path (daca exista)
+if test -d $HOME/.config/fish/completions
+    set -gp fish_complete_path $HOME/.config/fish/completions
+end
+
+# =======================================================
+# 2. EXPORTS & XDG ENVIRONMENT
+# =======================================================
+set -gx XDG_DATA_HOME "$HOME/.local/share"
+set -gx XDG_CONFIG_HOME "$HOME/.config"
+set -gx XDG_STATE_HOME "$HOME/.local/state"
+set -gx XDG_CACHE_HOME "$HOME/.cache"
+
+set -gx EDITOR nvim
+set -gx VISUAL nvim
+set -gx CLICOLOR 1
+set -gx DOCKER_CONFIG "$HOME/.docker"
+set -gx ANDROID_HOME "$HOME/Android/Sdk"
+
+# Vi mode nativ (inlocuieste zsh-vi-mode)
+fish_vi_key_bindings
+
+# Less colors
+set -gx LESS_TERMCAP_mb (printf "\e[01;31m")
+set -gx LESS_TERMCAP_md (printf "\e[01;31m")
+set -gx LESS_TERMCAP_me (printf "\e[0m")
+set -gx LESS_TERMCAP_se (printf "\e[0m")
+set -gx LESS_TERMCAP_so (printf "\e[01;44;33m")
+set -gx LESS_TERMCAP_ue (printf "\e[0m")
+set -gx LESS_TERMCAP_us (printf "\e[01;32m")
+
+# =======================================================
+# 3. ALIASES & ABBREVIATIONS
+# =======================================================
+alias vim='nvim'
+alias vi='nvim'
+alias efc='nvim ~/.config/fish/config.fish'
+
+# Modern CLI utils
+if type -q rg
+    alias grep='rg'
+end
+
+if type -q bat
+    alias cat='bat'
+end
+
+alias ls='eza --icons --color=always --group-directories-first'
+alias ll='eza -alF --icons --color=always --group-directories-first'
+alias la='eza -a --icons --color=always --group-directories-first'
+alias l='eza -F --icons --color=always --group-directories-first'
+alias tree='tree -CAhF --dirsfirst'
+
+alias cp='cp -i'
+alias mv='mv -i'
+alias mkdir='mkdir -p'
+alias cls='clear'
+alias lg='lazygit'
+
+# Git helper
+alias gcom='git add . && git commit -m'
+
+# =======================================================
+# 4. FUNCTIONS (YAZI & GIT HELPERS)
+# =======================================================
+function lazyg --description 'Git add, commit and push'
+    git add . && git commit -m "$argv[1]" && git push
+end
+
+# =======================================================
+# 5. INTEGRATIONS & PROMPT
+# =======================================================
+# Mise (se incarca primul pentru a asigura disponibilitatea uneltelor)
+if test -x ~/.local/bin/mise
+    ~/.local/bin/mise activate fish | source
+else if type -q mise
+    mise activate fish | source
+end
+
+# FZF configuration
+if type -q fd
+    set -gx FZF_DEFAULT_COMMAND 'fd --type f --strip-cwd-prefix --hidden --follow --exclude .git'
+    set -gx FZF_CTRL_T_COMMAND "$FZF_DEFAULT_COMMAND"
+    set -gx FZF_ALT_C_COMMAND 'fd --type d --strip-cwd-prefix --hidden --follow --exclude .git'
+end
+
+set -gx FZF_DEFAULT_OPTS "--height 40% --layout=reverse --border --inline-info --color=dark"
+
+if type -q fzf
+    fzf --fish | source
+end
+
+# Zoxide
+if type -q zoxide
+    zoxide init fish | source
+end
+
+# Starship Prompt
+if type -q starship
+    starship init fish | source
+end
+
+# External script configs (daca exista fisier echivalent pentru fish)
+if test -f "$HOME/github/music-player-service/aliases.fish"
+    source "$HOME/github/music-player-service/aliases.fish"
+end
+source "$HOME/.cargo/env.fish"
+# Remove legacy hooks to prevent errors when upgrading.
+# This can be removed when we cleanup other universal abbr code.
+functions -e _git_install _git_update _git_uninstall
+
+# fisher initialization, protected as omf also tries to run it.
+set -q fisher_path; or set -l fisher_path $__fish_config_dir
+if test -f $fisher_path/functions/__git.init.fish
+  source $fisher_path/functions/__git.init.fish
+  __git.init
+end
+function grename -d "Rename 'old' branch to 'new', including in origin remote" -a old new
+  if test (count $argv) -ne 2
+    echo "Usage: "(status -u)" old_branch new_branch"
+    return 1
+  end
+  git branch -m $old $new
+  git push origin :$old
+  and git push --set-upstream origin $new
+end
+
+complete -c grename -x -a "(complete -C 'git branch ')"
+function gbage -d "List local branches and display their age"
+  git for-each-ref --sort=committerdate refs/heads/ \
+    --format="%(HEAD) %(color:yellow)%(refname:short)%(color:reset) - %(color:red)%(objectname:short)%(color:reset) - %(contents:subject) - %(authorname) (%(color:green)%(committerdate:relative)%(color:reset))"
+end
+
+function gtl -d "List tags matching prefix" -a prefix
+  git tag --sort=-v:refname -n -l $prefix\*
+end
+function __git.branch_has_wip -d "Returns 0 if branch has --wip--, otherwise 1"
+  git log -n 1 2>/dev/null | grep -qc "\-\-wip\-\-"
+end
+function fisher --argument-names cmd --description "A plugin manager for Fish"
+    set --query fisher_path || set --local fisher_path $__fish_config_dir
+    set --local fisher_version 4.4.8
+    set --local fish_plugins $__fish_config_dir/fish_plugins
+
+    switch "$cmd"
+        case -v --version
+            echo "fisher, version $fisher_version"
+        case "" -h --help
+            echo "Usage: fisher install   <plugins...>  Install plugins"
+            echo "       fisher remove    <plugins...>  Remove installed plugins" 
+            echo "       fisher uninstall <plugins...>  Remove installed plugins (alias)" 
+            echo "       fisher update    <plugins...>  Update installed plugins"
+            echo "       fisher update                  Update all installed plugins"
+            echo "       fisher list    [<regex>]       List installed plugins matching regex"
+            echo "Options:"
+            echo "       -v, --version  Print version"
+            echo "       -h, --help     Print this help message"
+            echo "Variables:"
+            echo "       \$fisher_path  Plugin installation path. Default: $__fish_config_dir" | string replace --regex -- $HOME \~
+        case ls list
+            string match --entire --regex -- "$argv[2]" $_fisher_plugins
+        case install update remove uninstall
+            isatty || read --local --null --array stdin && set --append argv $stdin
+
+            test "$cmd" = uninstall && set cmd remove
+
+            set --local install_plugins
+            set --local update_plugins
+            set --local remove_plugins
+            set --local arg_plugins $argv[2..-1]
+            set --local old_plugins $_fisher_plugins
+            set --local new_plugins
+
+            test -e $fish_plugins && set --local file_plugins (string match --regex -- '^[^\s]+$' <$fish_plugins | string replace -- \~ ~)
+
+            if ! set --query argv[2]
+                if test "$cmd" != update
+                    echo "fisher: Not enough arguments for command: \"$cmd\"" >&2 && return 1
+                else if ! set --query file_plugins
+                    echo "fisher: \"$fish_plugins\" file not found: \"$cmd\"" >&2 && return 1
+                end
+                set arg_plugins $file_plugins
+            else if test "$cmd" = install && ! set --query old_plugins[1] 
+                set --append arg_plugins $file_plugins
+            end
+
+            for plugin in $arg_plugins
+                set plugin (test -e "$plugin" && realpath $plugin || string lower -- $plugin)
+                contains -- "$plugin" $new_plugins || set --append new_plugins $plugin
+            end
+
+            if set --query argv[2]
+                for plugin in $new_plugins
+                    if contains -- "$plugin" $old_plugins
+                        test "$cmd" = remove &&
+                            set --append remove_plugins $plugin ||
+                            set --append update_plugins $plugin
+                    else if test "$cmd" = install
+                        set --append install_plugins $plugin
+                    else
+                        echo "fisher: Plugin not installed: \"$plugin\"" >&2 && return 1
+                    end
+                end
+            else
+                for plugin in $new_plugins
+                    contains -- "$plugin" $old_plugins &&
+                        set --append update_plugins $plugin ||
+                        set --append install_plugins $plugin
+                end
+
+                for plugin in $old_plugins
+                    contains -- "$plugin" $new_plugins || set --append remove_plugins $plugin
+                end
+            end
+
+            set --local pid_list
+            set --local source_plugins
+            set --local fetch_plugins $update_plugins $install_plugins
+            set --local fish_path (status fish-path)
+
+            echo (set_color --bold)fisher $cmd version $fisher_version(set_color normal)
+
+            for plugin in $fetch_plugins
+                set --local source (command mktemp -d)
+                set --append source_plugins $source
+
+                command mkdir -p $source/{completions,conf.d,themes,functions}
+
+                $fish_path --command "
+                    if test -e $plugin
+                        command cp -Rf $plugin/* $source
+                    else
+                        set resp (command mktemp)
+                        set temp (command mktemp -d)
+                        set repo (string split -- \@ $plugin) || set repo[2] HEAD
+
+                        if set path (string replace --regex -- '^(https://)?gitlab.com/' '' \$repo[1])
+                            set name (string split -- / \$path)[-1]
+                            set url https://gitlab.com/\$path/-/archive/\$repo[2]/\$name-\$repo[2].tar.gz
+                        else
+                            set url https://api.github.com/repos/\$repo[1]/tarball/\$repo[2]
+                        end
+
+                        echo Fetching (set_color --underline)\$url(set_color normal)
+
+                        set http (command curl -q --silent -L -o \$resp -w %{http_code} \$url)
+
+                        if test \"\$http\" = 200 && command tar -xzC \$temp -f \$resp 2>/dev/null
+                            command cp -Rf \$temp/*/* $source
+                        else if test \"\$http\" = 403
+                            echo fisher: GitHub API rate limit exceeded \(HTTP 403\) >&2
+                            command rm -rf $source
+                        else
+                            echo fisher: Invalid plugin name or host unavailable: \\\"$plugin\\\" >&2
+                            command rm -rf $source
+                        end
+
+                        command rm -rf \$temp
+                    end
+
+                    set files $source/* && string match --quiet --regex -- .+\.fish\\\$ \$files
+                " &
+
+                set --append pid_list (jobs --last --pid)
+            end
+
+            wait $pid_list 2>/dev/null
+
+            for plugin in $fetch_plugins
+                if set --local source $source_plugins[(contains --index -- "$plugin" $fetch_plugins)] && test ! -e $source
+                    if set --local index (contains --index -- "$plugin" $install_plugins)
+                        set --erase install_plugins[$index]
+                    else
+                        set --erase update_plugins[(contains --index -- "$plugin" $update_plugins)]
+                    end
+                end
+            end
+
+            for plugin in $update_plugins $remove_plugins
+                if set --local index (contains --index -- "$plugin" $_fisher_plugins)
+                    set --local plugin_files_var _fisher_(string escape --style=var -- $plugin)_files
+
+                    if contains -- "$plugin" $remove_plugins
+                        for name in (string replace --filter --regex -- '.+/conf\.d/([^/]+)\.fish$' '$1' $$plugin_files_var)
+                            emit {$name}_uninstall
+                        end
+                        printf "%s\n" Removing\ (set_color red --bold)$plugin(set_color normal) "         "$$plugin_files_var | string replace -- \~ ~
+                        set --erase _fisher_plugins[$index]
+                    end
+
+                    command rm -rf (string replace -- \~ ~ $$plugin_files_var)
+
+                    functions --erase (string replace --filter --regex -- '.+/functions/([^/]+)\.fish$' '$1' $$plugin_files_var)
+
+                    for name in (string replace --filter --regex -- '.+/completions/([^/]+)\.fish$' '$1' $$plugin_files_var)
+                        complete --erase --command $name
+                    end
+
+                    set --erase $plugin_files_var
+                end
+            end
+
+            if set --query update_plugins[1] || set --query install_plugins[1]
+                command mkdir -p $fisher_path/{functions,themes,conf.d,completions}
+            end
+
+            for plugin in $update_plugins $install_plugins
+                set --local source $source_plugins[(contains --index -- "$plugin" $fetch_plugins)]
+                set --local files $source/{functions,themes,conf.d,completions}/*
+
+                if set --local index (contains --index -- $plugin $install_plugins)
+                    set --local user_files $fisher_path/{functions,themes,conf.d,completions}/*
+                    set --local conflict_files
+
+                    for file in (string replace -- $source/ $fisher_path/ $files)
+                        contains -- $file $user_files && set --append conflict_files $file
+                    end
+
+                    if set --query conflict_files[1] && set --erase install_plugins[$index]
+                        echo -s "fisher: Cannot install \"$plugin\": please remove or move conflicting files first:" \n"        "$conflict_files >&2
+                        continue
+                    end
+                end
+
+                for file in (string replace -- $source/ "" $files)
+                    command cp -RLf $source/$file $fisher_path/$file
+                end
+
+                set --local plugin_files_var _fisher_(string escape --style=var -- $plugin)_files
+
+                set --query files[1] && set --universal $plugin_files_var (string replace -- $source $fisher_path $files | string replace -- ~ \~)
+
+                contains -- $plugin $_fisher_plugins || set --universal --append _fisher_plugins $plugin
+                contains -- $plugin $install_plugins && set --local event install || set --local event update
+
+                printf "%s\n" Installing\ (set_color --bold)$plugin(set_color normal) "           "$$plugin_files_var | string replace -- \~ ~
+
+                for file in (string match --regex -- '.+/[^/]+\.fish$' $$plugin_files_var | string replace -- \~ ~)
+                    source $file
+                    if set --local name (string replace --regex -- '.+conf\.d/([^/]+)\.fish$' '$1' $file)
+                        emit {$name}_$event
+                    end
+                end
+            end
+
+            command rm -rf $source_plugins
+
+            if set --query _fisher_plugins[1]
+                set --local commit_plugins
+
+                for plugin in $file_plugins
+                    contains -- (string lower -- $plugin) (string lower -- $_fisher_plugins) && set --append commit_plugins $plugin
+                end
+
+                for plugin in $_fisher_plugins
+                    contains -- (string lower -- $plugin) (string lower -- $commit_plugins) || set --append commit_plugins $plugin
+                end
+
+                string replace --regex -- $HOME \~ $commit_plugins >$fish_plugins
+            else
+                set --erase _fisher_plugins
+                command rm -f $fish_plugins
+            end
+
+            set --local total (count $install_plugins) (count $update_plugins) (count $remove_plugins)
+
+            test "$total" != "0 0 0" && echo (string join ", " (
+                test $total[1] = 0 || echo "Installed $total[1]") (
+                test $total[2] = 0 || echo "Updated $total[2]") (
+                test $total[3] = 0 || echo "Removed $total[3]")
+            ) plugin/s
+        case \*
+            echo "fisher: Unknown command: \"$cmd\"" >&2 && return 1
+    end
+end
+
+if ! set --query _fisher_upgraded_to_4_4
+    set --universal _fisher_upgraded_to_4_4
+    if functions --query _fisher_list
+        set --query XDG_DATA_HOME[1] || set --local XDG_DATA_HOME ~/.local/share
+        command rm -rf $XDG_DATA_HOME/fisher
+        functions --erase _fisher_{list,plugin_parse}
+        fisher update >/dev/null 2>/dev/null
+    else
+        for var in (set --names | string match --entire --regex '^_fisher_.+_files$')
+            set $var (string replace -- ~ \~ $$var)
+        end
+        functions --erase _fisher_fish_postexec
+    end
+end
+function __git.init
+  function __git.create_abbr -d "Create Git plugin abbreviation"
+    set -l name $argv[1]
+    set -l body $argv[2..-1]
+
+    # TODO: global scope abbr will be default in fish 3.6.0
+    abbr -a -g $name $body
+  end
+
+  # Provide a smooth transition from universal to global abbreviations by
+  # deleting the old univeral ones.  Can be removed after fish 3.6 is in
+  # wide-spread use, i.e. 2024.  __git.destroy should also be removed
+  # at the same time.
+  if set -q __git_plugin_initialized
+    __git.destroy
+  end
+
+  # git abbreviations
+  __git.create_abbr g          git
+  __git.create_abbr ga         git add
+  __git.create_abbr gaa        git add --all
+  __git.create_abbr gau        git add --update
+  __git.create_abbr gapa       git add --patch
+  __git.create_abbr gap        git apply
+  __git.create_abbr gb         git branch -vv
+  __git.create_abbr gba        git branch -a -v
+  __git.create_abbr gban       git branch -a -v --no-merged
+  __git.create_abbr gbd        git branch -d
+  __git.create_abbr gbD        git branch -D
+  __git.create_abbr ggsup      git branch --set-upstream-to=origin/\(__git.current_branch\)
+  __git.create_abbr gbl        git blame -b -w
+  __git.create_abbr gbs        git bisect
+  __git.create_abbr gbsb       git bisect bad
+  __git.create_abbr gbsg       git bisect good
+  __git.create_abbr gbsr       git bisect reset
+  __git.create_abbr gbss       git bisect start
+  __git.create_abbr gc         git commit -v
+  __git.create_abbr gc!        git commit -v --amend
+  __git.create_abbr gcn!       git commit --no-edit --amend
+  __git.create_abbr gca        git commit -v -a
+  __git.create_abbr gca!       git commit -v -a --amend
+  __git.create_abbr gcan!      git commit -a --no-edit --amend
+  __git.create_abbr gcv        git commit -v --no-verify
+  __git.create_abbr gcav       git commit -a -v --no-verify
+  __git.create_abbr gcav!      git commit -a -v --no-verify --amend
+  __git.create_abbr gcm        git commit -m
+  __git.create_abbr gcam       git commit -a -m
+  __git.create_abbr gcs        git commit -S
+  __git.create_abbr gcs!       git commit -S --amend
+  __git.create_abbr gscam      git commit -S -a -m
+  __git.create_abbr gcfx       git commit --fixup
+  __git.create_abbr gcf        git config --list
+  __git.create_abbr gcl        git clone
+  __git.create_abbr gclean     git clean -di
+  __git.create_abbr gclean!    git clean -dfx
+  __git.create_abbr gclean!!   "git reset --hard; and git clean -dfx"
+  __git.create_abbr gcount     git shortlog -sn
+  __git.create_abbr gcp        git cherry-pick
+  __git.create_abbr gcpa       git cherry-pick --abort
+  __git.create_abbr gcpc       git cherry-pick --continue
+  __git.create_abbr gd         git diff
+  __git.create_abbr gdca       git diff --cached
+  __git.create_abbr gds        git diff --stat
+  __git.create_abbr gdsc       git diff --stat --cached
+  __git.create_abbr gdt        git diff-tree --no-commit-id --name-only -r
+  __git.create_abbr gdw        git diff --word-diff
+  __git.create_abbr gdwc       git diff --word-diff --cached
+  __git.create_abbr gdto       git difftool
+  __git.create_abbr gdg        git diff --no-ext-diff
+  __git.create_abbr gignore    git update-index --assume-unchanged
+  __git.create_abbr gf         git fetch
+  __git.create_abbr gfa        git fetch --all --prune
+  __git.create_abbr gfm        "git fetch origin (__git.default_branch) --prune; and git merge FETCH_HEAD"
+  __git.create_abbr gfo        git fetch origin
+  __git.create_abbr gl         git pull
+  __git.create_abbr ggl        git pull origin \(__git.current_branch\)
+  __git.create_abbr gll        git pull origin
+  __git.create_abbr glr        git pull --rebase
+  __git.create_abbr glg        git log --stat
+  __git.create_abbr glgg       git log --graph
+  __git.create_abbr glgga      git log --graph --decorate --all
+  __git.create_abbr glo        git log --oneline --decorate --color
+  __git.create_abbr glog       git log --oneline --decorate --color --graph
+  __git.create_abbr gloga      git log --oneline --decorate --color --graph --all
+  __git.create_abbr glom       git log --oneline --decorate --color \(__git.default_branch\)..
+  __git.create_abbr glod       git log --oneline --decorate --color develop..
+  __git.create_abbr gloo       "git log --pretty=format:'%C(yellow)%h %Cred%ad %Cblue%an%Cgreen%d %Creset%s' --date=short"
+  __git.create_abbr gm         git merge
+  __git.create_abbr gma        git merge --abort
+  __git.create_abbr gmt        git mergetool --no-prompt
+  __git.create_abbr gmom       git merge origin/\(__git.default_branch\)
+  __git.create_abbr gp         git push
+  __git.create_abbr gp!        git push --force-with-lease
+  __git.create_abbr gpo        git push origin
+  __git.create_abbr gpo!       git push --force-with-lease origin
+  __git.create_abbr gpv        git push --no-verify
+  __git.create_abbr gpv!       git push --no-verify --force-with-lease
+  __git.create_abbr ggp        git push origin \(__git.current_branch\)
+  __git.create_abbr ggp!       git push origin \(__git.current_branch\) --force-with-lease
+  __git.create_abbr gpu        git push origin \(__git.current_branch\) --set-upstream
+  __git.create_abbr gpoat      "git push origin --all; and git push origin --tags"
+  __git.create_abbr ggpnp      "git pull origin (__git.current_branch); and git push origin (__git.current_branch)"
+  __git.create_abbr gr         git remote -vv
+  __git.create_abbr gra        git remote add
+  __git.create_abbr grb        git rebase
+  __git.create_abbr grba       git rebase --abort
+  __git.create_abbr grbc       git rebase --continue
+  __git.create_abbr grbi       git rebase --interactive
+  __git.create_abbr grbm       git rebase \(__git.default_branch\)
+  __git.create_abbr grbmi      git rebase \(__git.default_branch\) --interactive
+  __git.create_abbr grbmia     git rebase \(__git.default_branch\) --interactive --autosquash
+  __git.create_abbr grbom      "git fetch origin (__git.default_branch); and git rebase FETCH_HEAD"
+  __git.create_abbr grbomi     "git fetch origin (__git.default_branch); and git rebase FETCH_HEAD --interactive"
+  __git.create_abbr grbomia    "git fetch origin (__git.default_branch); and git rebase FETCH_HEAD --interactive --autosquash"
+  __git.create_abbr grbd       git rebase develop
+  __git.create_abbr grbdi      git rebase develop --interactive
+  __git.create_abbr grbdia     git rebase develop --interactive --autosquash
+  __git.create_abbr grbs       git rebase --skip
+  __git.create_abbr ggu        git pull --rebase origin \(__git.current_branch\)
+  __git.create_abbr grev       git revert
+  __git.create_abbr grh        git reset
+  __git.create_abbr grhh       git reset --hard
+  __git.create_abbr grhpa      git reset --patch
+  __git.create_abbr grm        git rm
+  __git.create_abbr grmc       git rm --cached
+  __git.create_abbr grmv       git remote rename
+  __git.create_abbr grpo       git remote prune origin
+  __git.create_abbr grrm       git remote remove
+  __git.create_abbr grs        git restore
+  __git.create_abbr grset      git remote set-url
+  __git.create_abbr grss       git restore --source
+  __git.create_abbr grst       git restore --staged
+  __git.create_abbr grup       git remote update
+  __git.create_abbr grv        git remote -v
+  __git.create_abbr gsh        git show
+  __git.create_abbr gsd        git svn dcommit
+  __git.create_abbr gsr        git svn rebase
+  __git.create_abbr gsb        git status -sb
+  __git.create_abbr gss        git status -s
+  __git.create_abbr gst        git status
+  __git.create_abbr gsta       git stash
+  __git.create_abbr gstd       git stash drop
+  __git.create_abbr gstl       git stash list
+  __git.create_abbr gstp       git stash pop
+  __git.create_abbr gsts       git stash show --text
+  __git.create_abbr gsu        git submodule update
+  __git.create_abbr gsur       git submodule update --recursive
+  __git.create_abbr gsuri      git submodule update --recursive --init
+  __git.create_abbr gts        git tag -s
+  __git.create_abbr gtv        git tag | sort -V
+  __git.create_abbr gsw        git switch
+  __git.create_abbr gswc       git switch --create
+  __git.create_abbr gunignore  git update-index --no-assume-unchanged
+  __git.create_abbr gup        git pull --rebase
+  __git.create_abbr gpr        git pull --rebase
+  __git.create_abbr gupv       git pull --rebase -v
+  __git.create_abbr gprv       git pull --rebase -v
+  __git.create_abbr gupa       git pull --rebase --autostash
+  __git.create_abbr gpra       git pull --rebase --autostash
+  __git.create_abbr gupav      git pull --rebase --autostash -v
+  __git.create_abbr gprav      git pull --rebase --autostash -v
+  __git.create_abbr gprom      git pull --rebase origin \(__git.default_branch\)
+  __git.create_abbr gpromi     git pull --rebase=interactive origin \(__git.default_branch\)
+  __git.create_abbr gprum      git pull --rebase upstream \(__git.default_branch\)
+  __git.create_abbr gprumi     git pull --rebase=interactive upstream \(__git.default_branch\)
+  __git.create_abbr gwch       git log -p --abbrev-commit --pretty=medium --raw --no-merges
+
+  # git checkout abbreviations
+  __git.create_abbr gco        git checkout
+  __git.create_abbr gcb        git checkout -b
+  __git.create_abbr gcod       git checkout \(__git.develop_branch\)
+  __git.create_abbr gcom       git checkout \(__git.default_branch\)
+
+  # git flow abbreviations
+  __git.create_abbr gfb        git flow bugfix
+  __git.create_abbr gff        git flow feature
+  __git.create_abbr gfr        git flow release
+  __git.create_abbr gfh        git flow hotfix
+  __git.create_abbr gfs        git flow support
+
+  __git.create_abbr gfbs       git flow bugfix start
+  __git.create_abbr gffs       git flow feature start
+  __git.create_abbr gfrs       git flow release start
+  __git.create_abbr gfhs       git flow hotfix start
+  __git.create_abbr gfss       git flow support start
+
+  __git.create_abbr gfbt       git flow bugfix track
+  __git.create_abbr gfft       git flow feature track
+  __git.create_abbr gfrt       git flow release track
+  __git.create_abbr gfht       git flow hotfix track
+  __git.create_abbr gfst       git flow support track
+
+  __git.create_abbr gfp        git flow publish
+
+  # git worktree abbreviations
+  __git.create_abbr gwt        git worktree
+  __git.create_abbr gwta       git worktree add
+  __git.create_abbr gwtls      git worktree list
+  __git.create_abbr gwtlo      git worktree lock
+  __git.create_abbr gwtmv      git worktree move
+  __git.create_abbr gwtpr      git worktree prune
+  __git.create_abbr gwtrm      git worktree remove
+  __git.create_abbr gwtulo     git worktree unlock
+
+  # GitLab push options
+  __git.create_abbr gmr        git push origin \(__git.current_branch\) --set-upstream -o merge_request.create
+  __git.create_abbr gmwps      git push origin \(__git.current_branch\) --set-upstream -o merge_request.create -o merge_request.merge_when_pipeline_succeeds
+
+  # Cleanup declared functions
+  functions -e __git.create_abbr
+end
+function __git.default_branch -d "Use init.defaultBranch if it's set and exists, otherwise use main if it exists. Falls back to master"
+  command git rev-parse --git-dir &>/dev/null; or return
+  if set -l default_branch (command git config --get init.defaultBranch)
+    and command git show-ref -q --verify refs/heads/{$default_branch}
+    echo $default_branch
+  else if command git show-ref -q --verify refs/heads/main
+    echo main
+  else
+    echo master
+  end
+end
+function __git.current_branch -d "Output git's current branch name"
+  begin
+    git symbolic-ref HEAD; or \
+    git rev-parse --short HEAD; or return
+  end 2>/dev/null | sed -e 's|^refs/heads/||'
+end
+# gtest: test a command against git staged changes.
+#
+# example usage:
+#   gtest make test
+function gtest -d "test command on staged changes only"
+  # Stash working dir, keeping index changes.
+  git stash push -q --keep-index --include-untracked; or return
+
+  # Run test command against index changes only.
+  command $argv
+  set cmdstatus $status
+
+  # Return working dir and index to original state.
+  # Note: reset + restore is required to prevent merge conflicts
+  # when popping the stash.
+  git reset -q
+  git restore .
+  git stash pop -q --index; or return $status
+
+  return $cmdstatus
+end
+function glp -d "git log at requested pretty level" -a format
+  set -q format[1]; and git log --pretty=$format
+end
+
+complete -c glp -x -a "(complete -C 'git log --pretty=' | sed 's/^--pretty=//')"
+function __git.delete_branches -d "Delete multiple branches"
+  argparse f/force -- $argv
+
+  if set -ql _flag_force
+    set -f delete_flag -D
+  else
+    set -f delete_flag -d
+  end
+  for branch in $argv
+    git branch $delete_flag $branch
+  end
+end
+function gbda -d "Delete all branches merged in current HEAD, including squashed"
+  argparse g/gone -- $argv
+
+  set -l default_branch (__git.default_branch)
+
+  if set -ql _flag_gone
+    __git.delete_branches --force (
+      git for-each-ref refs/heads/ --format="%(refname:short) %(upstream:track)" refs/heads/ | \
+        command awk '$2 == "[gone]" { print $1 }'
+    )
+  end
+
+  __git.delete_branches (
+    git branch --merged | \
+      # *: current branch, +: current branch on worktree.
+      command grep -vE '^\*|^\+|^\s*(master|main|develop)\s*$' | \
+      string trim
+  )
+
+  git for-each-ref refs/heads/ "--format=%(refname:short)" | \
+    while read branch
+      set -l merge_base (git merge-base $default_branch $branch)
+      if string match -q -- '-*' (git cherry $default_branch (git commit-tree (git rev-parse $branch\^{tree}) -p $merge_base -m _))
+        __git.delete_branches --force $branch
+      end
+    end
+end
+# Work In Progress (wip)
+# These features allow to pause a branch development and switch to another one
+# When you want to go back to work, just unwip it
+#
+function gwip -d "git commit a work-in-progress branch"
+  git add -A; git rm (git ls-files --deleted) 2> /dev/null; git commit -m "--wip--" --no-verify
+end
+function grel -d "Print path relative to repository root" 
+  set -l repoDir (git rev-parse --show-prefix)
+  test -n "$repoDir"; and echo "/$repoDir"; or echo "/"
+end
+function __git.develop_branch -d "Use develop if it exists. Falls back to dev"
+  command git rev-parse --git-dir &>/dev/null; or return
+  if command git show-ref -q --verify refs/heads/develop
+    echo develop
+  else
+    echo dev
+  end
+end
+function gignored -w 'grep "^[[:lower:]]"' -d "list temporarily ignored files"
+  git ls-files -v | grep "^[[:lower:]]" $argv
+end
+# Work In Progress (wip)
+# These features allow to pause a branch development and switch to another one
+# When you want to go back to work, just unwip it
+#
+function gunwip -d "git uncommit the work-in-progress branch"
+  git log -n 1 | grep -q -c "\--wip--"; and git reset HEAD~1
+end
+function gdv -w "git diff -w" -d "Pipe `git diff` to `view` command"
+  git diff -w $argv | view -
+end
+function __git.destroy
+  for ab in $__git_plugin_abbreviations
+    abbr -e $ab
+  end
+  set -Ue __git_plugin_abbreviations
+  set -Ue __git_plugin_initialized
+end
+function grt -d "cd into the top of the current repository or submodule"
+  cd (git rev-parse --show-toplevel; or echo ".")
+end
+# ==============================================================================
+# 1. CORE & TERMINAL SETTINGS
+# ==============================================================================
+# Executa shell-ul implicit ca shell non-login (pastreaza env intact)
+set -g default-command "${SHELL}"
+
+# True color & terminal features
+set -g default-terminal "tmux-256color"
+set-option -sa terminal-overrides ",xterm*:Tc"
+set -as terminal-features ',xterm-256color:RGB'
+
+# Esential pentru Neovim: elimina delay-ul la apasarea tastei ESC
+set -s escape-time 0
+
+# Clipboard passthrough & OSC 52 integration
+set -s set-clipboard on
+set -g allow-passthrough on
+set -g mouse on
+
+# Focus events pentru autoread si pluginuri in Neovim
+set -g focus-events on
+
+# ==============================================================================
+# 2. INDEXING & WINDOW MANAGEMENT
+# ==============================================================================
+# Indexare de la 1 pentru ferestre si pane-uri (ergonomie pe tastatura)
+set -g base-index 1
+set -g pane-base-index 1
+set-window-option -g pane-base-index 1
+set-option -g renumber-windows on
+
+# Pastreaza directorul curent la deschiderea de pane-uri si ferestre noi
+bind '"' split-window -v -c "#{pane_current_path}"
+bind % split-window -h -c "#{pane_current_path}"
+bind c new-window -c "#{pane_current_path}"
+
+# ==============================================================================
+# 3. NAVIGATION & KEYBINDINGS
+# ==============================================================================
+# Selectie pane-uri in stil Vim
+bind h select-pane -L
+bind j select-pane -D
+bind k select-pane -U
+bind l select-pane -R
+
+# Switch pane-uri cu Alt + Sageti (fara prefix)
+bind -n M-Left select-pane -L
+bind -n M-Right select-pane -R
+bind -n M-Up select-pane -U
+bind -n M-Down select-pane -D
+
+# Switch ferestre cu Shift + Sageti
+bind -n S-Left previous-window
+bind -n S-Right next-window
+
+# Switch ferestre cu Shift + Alt + H/L (Vim-style)
+bind -n M-H previous-window
+bind -n M-L next-window
+
+# Reincarcare rapida a configuratiei
+bind r source-file ~/.config/tmux/tmux.conf \; display-message "Tmux config reloaded!"
+
+# ==============================================================================
+# 4. VI COPY MODE & CLIPBOARD
+# ==============================================================================
+setw -g mode-keys vi
+
+bind-key -T copy-mode-vi v send-keys -X begin-selection
+bind-key -T copy-mode-vi C-v send-keys -X rectangle-toggle
+bind-key -T copy-mode-vi y send-keys -X copy-selection-and-cancel
+
+# ==============================================================================
+# 5. THEME CONFIGURATION (Catppuccin Mocha)
+# ==============================================================================
+set -g @catppuccin_flavor "mocha"
+set -g @catppuccin_window_status_style "rounded"
+set -g @catppuccin_window_number_position "right"
+
+set -g @catppuccin_window_default_fill "number"
+set -g @catppuccin_window_default_text "#W"
+
+set -g @catppuccin_window_current_fill "number"
+set -g @catppuccin_window_current_text "#W"
+
+set -g @catppuccin_status_left_separator " "
+set -g @catppuccin_status_right_separator ""
+set -g @catppuccin_status_fill "icon"
+set -g @catppuccin_status_connect_separator "no"
+
+set -g @catppuccin_directory_text "#{pane_current_path}"
+
+set -g status-left ""
+set -gF status-right "#{E:@catppuccin_status_application}#{E:@catppuccin_status_session}#{E:@catppuccin_status_date_time}"
+
+# ==============================================================================
+# 6. PLUGINS & PLUGIN OPTIONS
+# ==============================================================================
+set -g @resurrect-strategy-nvim 'session'
+set -g @yank_selection_command 'wl-copy'
+
+set -g @plugin 'tmux-plugins/tpm'
+set -g @plugin 'tmux-plugins/tmux-sensible'
+set -g @plugin 'christoomey/vim-tmux-navigator'
+set -g @plugin 'tmux-plugins/tmux-yank'
+set -g @plugin 'catppuccin/tmux'
+set -g @plugin 'tmux-plugins/tmux-resurrect'
+
+# ==============================================================================
+# 7. INITIALIZE TPM (Trebuie sa ramana mereu ultima linie)
+# ==============================================================================
+run '~/.tmux/plugins/tpm/tpm'
+{
+  "extras": [
+    "lazyvim.plugins.extras.ai.copilot",
+    "lazyvim.plugins.extras.coding.yanky",
+    "lazyvim.plugins.extras.editor.telescope",
+    "lazyvim.plugins.extras.lang.clangd",
+    "lazyvim.plugins.extras.lang.json",
+    "lazyvim.plugins.extras.lang.markdown"
+  ],
+  "install_version": 8,
+  "news": {
+    "NEWS.md": "11866"
+  },
+  "version": 8
+}{
+  "neodev": {
+    "library": {
+      "enabled": true,
+      "plugins": true
+    }
+  },
+  "neoconf": {
+    "plugins": {
+      "lua_ls": {
+        "enabled": true
+      }
+    }
+  }
+}
+indent_type = "Spaces"
+indent_width = 2
+column_width = 120-- bootstrap lazy.nvim, LazyVim and your plugins
+require("config.lazy")
+{
+  "LazyVim": { "branch": "main", "commit": "999700997f72227187d49d8b92667183dc7fc809" },
+  "SchemaStore.nvim": { "branch": "main", "commit": "d93ef1e8365950420ea3e706e82caf65dc9ff968" },
+  "blink-copilot": { "branch": "main", "commit": "7ad8209b2f880a2840c94cdcd80ab4dc511d4f39" },
+  "blink.cmp": { "branch": "main", "commit": "78336bc89ee5365633bcf754d93df01678b5c08f" },
+  "bufferline.nvim": { "branch": "main", "commit": "655133c3b4c3e5e05ec549b9f8cc2894ac6f51b3" },
+  "catppuccin": { "branch": "main", "commit": "edefef779ab08ce1a4a404713e3012b0d202bd35" },
+  "clangd_extensions.nvim": { "branch": "main", "commit": "78c2ecd659d54972be17aa6ba2deac3c53223b80" },
+  "compiler.nvim": { "branch": "main", "commit": "c09ab4e795b92378727d7377c03b0d5c2453957c" },
+  "conform.nvim": { "branch": "master", "commit": "016802de402556da54c36bd7359b441266b01cdd" },
+  "copilot.lua": { "branch": "master", "commit": "9c8b172570105d31ff707cb0d62897f79c2ddb1f" },
+  "dressing.nvim": { "branch": "master", "commit": "2d7c2db2507fa3c4956142ee607431ddb2828639" },
+  "flash.nvim": { "branch": "main", "commit": "5f0f270fdc7c5b0c21d903ee85b9cb06f2ac636a" },
+  "friendly-snippets": { "branch": "main", "commit": "b4d01b0fdf3c9a549961c2f9ffe8dc09be166219" },
+  "gitsigns.nvim": { "branch": "main", "commit": "070a5d7b985546cc57e1fc61e5bc507fecac6045" },
+  "grug-far.nvim": { "branch": "main", "commit": "11595bf747edc270bce2069d1020502ad4ae56cf" },
+  "lazy.nvim": { "branch": "main", "commit": "85c7ff3711b730b4030d03144f6db6375044ae82" },
+  "lazydev.nvim": { "branch": "main", "commit": "ff2cbcba459b637ec3fd165a2be59b7bbaeedf0d" },
+  "lualine.nvim": { "branch": "master", "commit": "221ce6b2d999187044529f49da6554a92f740a96" },
+  "markdown-preview.nvim": { "branch": "master", "commit": "a923f5fc5ba36a3b17e289dc35dc17f66d0548ee" },
+  "mason-lspconfig.nvim": { "branch": "main", "commit": "b3298993d55fa194279b5eb9dbfb3a43da65cadf" },
+  "mason.nvim": { "branch": "main", "commit": "2a6940af80375532e5e9e7c1f2fc6319a1b7a69d" },
+  "mini.ai": { "branch": "main", "commit": "c2c4278beb759aa24b9506f56a67186a6cc2209c" },
+  "mini.icons": { "branch": "main", "commit": "f642e3ba8c12afbc8f32f6d77ef6597eac56786f" },
+  "mini.pairs": { "branch": "main", "commit": "b1c5a726921b7a8c9321e9a7a208aa0571de5810" },
+  "noice.nvim": { "branch": "main", "commit": "7bfd942445fb63089b59f97ca487d605e715f155" },
+  "nui.nvim": { "branch": "main", "commit": "10fc361835c856ba4233ef5ea135b919bf3dce97" },
+  "nvim-lint": { "branch": "master", "commit": "3d55c8f67c6ae5c15e1042571e107c7a3d5c5f4e" },
+  "nvim-lspconfig": { "branch": "master", "commit": "3e8d598d3b5f8338a41699c436e5fa11d2666cf0" },
+  "nvim-treesitter": { "branch": "main", "commit": "e289100ff98969e118c702199d88b764ce9e7fdf" },
+  "nvim-treesitter-textobjects": { "branch": "main", "commit": "5c7b0263797dfd1bd6202f2b219f3b53a80b2187" },
+  "nvim-ts-autotag": { "branch": "main", "commit": "d7220b55e16ed3c04e88086256def5d282429493" },
+  "overseer.nvim": { "branch": "master", "commit": "a93d9f6d6defdac4bcd6d2c8ba988650e42e0a0e" },
+  "persistence.nvim": { "branch": "main", "commit": "b20b2a7887bd39c1a356980b45e03250f3dce49c" },
+  "plenary.nvim": { "branch": "master", "commit": "74b06c6c75e4eeb3108ec01852001636d85a932b" },
+  "render-markdown.nvim": { "branch": "main", "commit": "640a3ec6d538bad17c328be373c7cad0293d9589" },
+  "snacks.nvim": { "branch": "main", "commit": "882c996cf28183f4d63640de0b4c02ec886d01f2" },
+  "telescope-fzf-native.nvim": { "branch": "main", "commit": "b25b749b9db64d375d782094e2b9dce53ad53a40" },
+  "telescope.nvim": { "branch": "master", "commit": "40aedd8a68c78a656a10a8d62d80c54af59420fb" },
+  "todo-comments.nvim": { "branch": "main", "commit": "31e3c38ce9b29781e4422fc0322eb0a21f4e8668" },
+  "tokyonight.nvim": { "branch": "main", "commit": "cdc07ac78467a233fd62c493de29a17e0cf2b2b6" },
+  "trouble.nvim": { "branch": "main", "commit": "bd67efe408d4816e25e8491cc5ad4088e708a69a" },
+  "ts-comments.nvim": { "branch": "main", "commit": "a59d6092213447450191122c9346f309161504cb" },
+  "vim-tmux-navigator": { "branch": "master", "commit": "e41c431a0c7b7388ae7ba341f01a0d217eb3a432" },
+  "which-key.nvim": { "branch": "main", "commit": "3aab2147e74890957785941f0c1ad87d0a44c15a" },
+  "yanky.nvim": { "branch": "main", "commit": "4b4ddd196526fd3d6fd091d931810f9743e936d3" }
+}
+tt.*
+.tests
+doc/tags
+debug
+.repro
+foo.*
+*.log
+data
+                                 Apache License
+                           Version 2.0, January 2004
+                        http://www.apache.org/licenses/
+
+   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+
+   1. Definitions.
+
+      "License" shall mean the terms and conditions for use, reproduction,
+      and distribution as defined by Sections 1 through 9 of this document.
+
+      "Licensor" shall mean the copyright owner or entity authorized by
+      the copyright owner that is granting the License.
+
+      "Legal Entity" shall mean the union of the acting entity and all
+      other entities that control, are controlled by, or are under common
+      control with that entity. For the purposes of this definition,
+      "control" means (i) the power, direct or indirect, to cause the
+      direction or management of such entity, whether by contract or
+      otherwise, or (ii) ownership of fifty percent (50%) or more of the
+      outstanding shares, or (iii) beneficial ownership of such entity.
+
+      "You" (or "Your") shall mean an individual or Legal Entity
+      exercising permissions granted by this License.
+
+      "Source" form shall mean the preferred form for making modifications,
+      including but not limited to software source code, documentation
+      source, and configuration files.
+
+      "Object" form shall mean any form resulting from mechanical
+      transformation or translation of a Source form, including but
+      not limited to compiled object code, generated documentation,
+      and conversions to other media types.
+
+      "Work" shall mean the work of authorship, whether in Source or
+      Object form, made available under the License, as indicated by a
+      copyright notice that is included in or attached to the work
+      (an example is provided in the Appendix below).
+
+      "Derivative Works" shall mean any work, whether in Source or Object
+      form, that is based on (or derived from) the Work and for which the
+      editorial revisions, annotations, elaborations, or other modifications
+      represent, as a whole, an original work of authorship. For the purposes
+      of this License, Derivative Works shall not include works that remain
+      separable from, or merely link (or bind by name) to the interfaces of,
+      the Work and Derivative Works thereof.
+
+      "Contribution" shall mean any work of authorship, including
+      the original version of the Work and any modifications or additions
+      to that Work or Derivative Works thereof, that is intentionally
+      submitted to Licensor for inclusion in the Work by the copyright owner
+      or by an individual or Legal Entity authorized to submit on behalf of
+      the copyright owner. For the purposes of this definition, "submitted"
+      means any form of electronic, verbal, or written communication sent
+      to the Licensor or its representatives, including but not limited to
+      communication on electronic mailing lists, source code control systems,
+      and issue tracking systems that are managed by, or on behalf of, the
+      Licensor for the purpose of discussing and improving the Work, but
+      excluding communication that is conspicuously marked or otherwise
+      designated in writing by the copyright owner as "Not a Contribution."
+
+      "Contributor" shall mean Licensor and any individual or Legal Entity
+      on behalf of whom a Contribution has been received by Licensor and
+      subsequently incorporated within the Work.
+
+   2. Grant of Copyright License. Subject to the terms and conditions of
+      this License, each Contributor hereby grants to You a perpetual,
+      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+      copyright license to reproduce, prepare Derivative Works of,
+      publicly display, publicly perform, sublicense, and distribute the
+      Work and such Derivative Works in Source or Object form.
+
+   3. Grant of Patent License. Subject to the terms and conditions of
+      this License, each Contributor hereby grants to You a perpetual,
+      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+      (except as stated in this section) patent license to make, have made,
+      use, offer to sell, sell, import, and otherwise transfer the Work,
+      where such license applies only to those patent claims licensable
+      by such Contributor that are necessarily infringed by their
+      Contribution(s) alone or by combination of their Contribution(s)
+      with the Work to which such Contribution(s) was submitted. If You
+      institute patent litigation against any entity (including a
+      cross-claim or counterclaim in a lawsuit) alleging that the Work
+      or a Contribution incorporated within the Work constitutes direct
+      or contributory patent infringement, then any patent licenses
+      granted to You under this License for that Work shall terminate
+      as of the date such litigation is filed.
+
+   4. Redistribution. You may reproduce and distribute copies of the
+      Work or Derivative Works thereof in any medium, with or without
+      modifications, and in Source or Object form, provided that You
+      meet the following conditions:
+
+      (a) You must give any other recipients of the Work or
+          Derivative Works a copy of this License; and
+
+      (b) You must cause any modified files to carry prominent notices
+          stating that You changed the files; and
+
+      (c) You must retain, in the Source form of any Derivative Works
+          that You distribute, all copyright, patent, trademark, and
+          attribution notices from the Source form of the Work,
+          excluding those notices that do not pertain to any part of
+          the Derivative Works; and
+
+      (d) If the Work includes a "NOTICE" text file as part of its
+          distribution, then any Derivative Works that You distribute must
+          include a readable copy of the attribution notices contained
+          within such NOTICE file, excluding those notices that do not
+          pertain to any part of the Derivative Works, in at least one
+          of the following places: within a NOTICE text file distributed
+          as part of the Derivative Works; within the Source form or
+          documentation, if provided along with the Derivative Works; or,
+          within a display generated by the Derivative Works, if and
+          wherever such third-party notices normally appear. The contents
+          of the NOTICE file are for informational purposes only and
+          do not modify the License. You may add Your own attribution
+          notices within Derivative Works that You distribute, alongside
+          or as an addendum to the NOTICE text from the Work, provided
+          that such additional attribution notices cannot be construed
+          as modifying the License.
+
+      You may add Your own copyright statement to Your modifications and
+      may provide additional or different license terms and conditions
+      for use, reproduction, or distribution of Your modifications, or
+      for any such Derivative Works as a whole, provided Your use,
+      reproduction, and distribution of the Work otherwise complies with
+      the conditions stated in this License.
+
+   5. Submission of Contributions. Unless You explicitly state otherwise,
+      any Contribution intentionally submitted for inclusion in the Work
+      by You to the Licensor shall be under the terms and conditions of
+      this License, without any additional terms or conditions.
+      Notwithstanding the above, nothing herein shall supersede or modify
+      the terms of any separate license agreement you may have executed
+      with Licensor regarding such Contributions.
+
+   6. Trademarks. This License does not grant permission to use the trade
+      names, trademarks, service marks, or product names of the Licensor,
+      except as required for reasonable and customary use in describing the
+      origin of the Work and reproducing the content of the NOTICE file.
+
+   7. Disclaimer of Warranty. Unless required by applicable law or
+      agreed to in writing, Licensor provides the Work (and each
+      Contributor provides its Contributions) on an "AS IS" BASIS,
+      WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+      implied, including, without limitation, any warranties or conditions
+      of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A
+      PARTICULAR PURPOSE. You are solely responsible for determining the
+      appropriateness of using or redistributing the Work and assume any
+      risks associated with Your exercise of permissions under this License.
+
+   8. Limitation of Liability. In no event and under no legal theory,
+      whether in tort (including negligence), contract, or otherwise,
+      unless required by applicable law (such as deliberate and grossly
+      negligent acts) or agreed to in writing, shall any Contributor be
+      liable to You for damages, including any direct, indirect, special,
+      incidental, or consequential damages of any character arising as a
+      result of this License or out of the use or inability to use the
+      Work (including but not limited to damages for loss of goodwill,
+      work stoppage, computer failure or malfunction, or any and all
+      other commercial damages or losses), even if such Contributor
+      has been advised of the possibility of such damages.
+
+   9. Accepting Warranty or Additional Liability. While redistributing
+      the Work or Derivative Works thereof, You may choose to offer,
+      and charge a fee for, acceptance of support, warranty, indemnity,
+      or other liability obligations and/or rights consistent with this
+      License. However, in accepting such obligations, You may act only
+      on Your own behalf and on Your sole responsibility, not on behalf
+      of any other Contributor, and only if You agree to indemnify,
+      defend, and hold each Contributor harmless for any liability
+      incurred by, or claims asserted against, such Contributor by reason
+      of your accepting any such warranty or additional liability.
+
+   END OF TERMS AND CONDITIONS
+
+   APPENDIX: How to apply the Apache License to your work.
+
+      To apply the Apache License to your work, attach the following
+      boilerplate notice, with the fields enclosed by brackets "[]"
+      replaced with your own identifying information. (Don't include
+      the brackets!)  The text should be enclosed in the appropriate
+      comment syntax for the file format. We also recommend that a
+      file or class name and description of purpose be included on the
+      same "printed page" as the copyright notice for easier
+      identification within third-party archives.
+
+   Copyright [yyyy] [name of copyright owner]
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+-- Keymaps are automatically loaded on the VeryLazy event
+-- Default keymaps that are always set: https://github.com/LazyVim/LazyVim/blob/main/lua/lazyvim/config/keymaps.lua
+-- Add any additional keymaps here
+
+local map = vim.keymap.set
+
+-- Modificări rapide & Undo
+map("i", "jk", "<ESC>", { desc = "Exit insert mode" })
+map({ "n", "i" }, "<C-z>", "<cmd>undo<cr>", { desc = "Undo" })
+map({ "n", "i", "v" }, "<C-s>", "<cmd>w<cr>", { desc = "Save file" })
+
+-- Tmux navigation
+map("n", "<C-h>", "<cmd>TmuxNavigateLeft<cr>", { desc = "Navigate Tmux Left" })
+map("n", "<C-l>", "<cmd>TmuxNavigateRight<cr>", { desc = "Navigate Tmux Right" })
+map("n", "<C-j>", "<cmd>TmuxNavigateDown<cr>", { desc = "Navigate Tmux Down" })
+map("n", "<C-k>", "<cmd>TmuxNavigateUp<cr>", { desc = "Navigate Tmux Up" })
+
+-- Nvim-DAP (Debug)
+map("n", "<Leader>dl", function()
+  require("dap").step_into()
+end, { desc = "DAP: Step Into" })
+map("n", "<Leader>dj", function()
+  require("dap").step_over()
+end, { desc = "DAP: Step Over" })
+map("n", "<Leader>dk", function()
+  require("dap").step_out()
+end, { desc = "DAP: Step Out" })
+map("n", "<Leader>dc", function()
+  require("dap").continue()
+end, { desc = "DAP: Continue" })
+map("n", "<Leader>db", function()
+  require("dap").toggle_breakpoint()
+end, { desc = "DAP: Toggle Breakpoint" })
+map("n", "<Leader>dd", function()
+  require("dap").set_breakpoint(vim.fn.input("Breakpoint condition: "))
+end, { desc = "DAP: Set Conditional Breakpoint" })
+map("n", "<Leader>de", function()
+  require("dap").terminate()
+end, { desc = "DAP: Terminate" })
+map("n", "<Leader>dr", function()
+  require("dap").run_last()
+end, { desc = "DAP: Run Last" })
+
+-- DAP Python
+map("n", "<Leader>dpr", function()
+  require("dap-python").test_method()
+end, { desc = "DAP Python: Test Method" })
+
+-- Compiler.nvim
+map("n", "<F6>", "<cmd>CompilerOpen<cr>", { noremap = true, silent = true, desc = "Compiler: Open" })
+map(
+  "n",
+  "<S-F7>",
+  "<cmd>CompilerToggleResults<cr>",
+  { noremap = true, silent = true, desc = "Compiler: Toggle Results" }
+)
+
+-- Runners pentru limbaje
+map("n", "<leader>rh", "<cmd>!runghc %<cr>", { noremap = true, silent = true, desc = "Run Haskell (runghc)" })
+map("n", "<leader>rd", "<cmd>!dotnet run<cr>", { noremap = true, silent = true, desc = "Run .NET project" })
+map("n", "<leader><leader>", "<cmd>RunCode<cr>", { noremap = true, silent = true, desc = "Run Code" })
+-- Options are automatically loaded before lazy.nvim startup
+-- Default options that are always set: https://github.com/LazyVim/LazyVim/blob/main/lua/lazyvim/config/options.lua
+-- Add any additional options here
+-- -- ~/.config/nvim/lua/config/options.lua
+
+local opt = vim.opt
+
+opt.cursorlineopt = "both"
+opt.clipboard = "unnamedplus"
+opt.relativenumber = true
+-- Autocmds are automatically loaded on the VeryLazy event
+-- Default autocmds that are always set: https://github.com/LazyVim/LazyVim/blob/main/lua/lazyvim/config/autocmds.lua
+--
+-- Add any additional autocmds here
+-- with `vim.api.nvim_create_autocmd`
+--
+-- Or remove existing autocmds by their group name (which is prefixed with `lazyvim_` for the defaults)
+-- e.g. vim.api.nvim_del_augroup_by_name("lazyvim_wrap_spell")
+local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
+if not (vim.uv or vim.loop).fs_stat(lazypath) then
+  local lazyrepo = "https://github.com/folke/lazy.nvim.git"
+  local out = vim.fn.system({ "git", "clone", "--filter=blob:none", "--branch=stable", lazyrepo, lazypath })
+  if vim.v.shell_error ~= 0 then
+    vim.api.nvim_echo({
+      { "Failed to clone lazy.nvim:\n", "ErrorMsg" },
+      { out, "WarningMsg" },
+      { "\nPress any key to exit..." },
+    }, true, {})
+    vim.fn.getchar()
+    os.exit(1)
+  end
+end
+vim.opt.rtp:prepend(lazypath)
+
+require("lazy").setup({
+  spec = {
+    -- add LazyVim and import its plugins
+    { "LazyVim/LazyVim", import = "lazyvim.plugins" },
+    -- import/override with your plugins
+    { import = "plugins" },
+  },
+  defaults = {
+    -- By default, only LazyVim plugins will be lazy-loaded. Your custom plugins will load during startup.
+    -- If you know what you're doing, you can set this to `true` to have all your custom plugins lazy-loaded by default.
+    lazy = false,
+    -- It's recommended to leave version=false for now, since a lot the plugin that support versioning,
+    -- have outdated releases, which may break your Neovim install.
+    version = false, -- always use the latest git commit
+    -- version = "*", -- try installing the latest stable version for plugins that support semver
+  },
+  install = { colorscheme = { "tokyonight", "habamax" } },
+  checker = {
+    enabled = true, -- check for plugin updates periodically
+    notify = false, -- notify on update
+  }, -- automatically check for plugin updates
+  performance = {
+    rtp = {
+      -- disable some rtp plugins
+      disabled_plugins = {
+        "gzip",
+        -- "matchit",
+        -- "matchparen",
+        -- "netrwPlugin",
+        "tarPlugin",
+        "tohtml",
+        "tutor",
+        "zipPlugin",
+      },
+    },
+  },
+})
+-- since this is just an example spec, don't actually load anything here and return an empty spec
+-- stylua: ignore
+if true then return {} end
+
+-- every spec file under the "plugins" directory will be loaded automatically by lazy.nvim
+--
+-- In your plugin files, you can:
+-- * add extra plugins
+-- * disable/enabled LazyVim plugins
+-- * override the configuration of LazyVim plugins
+return {
+  -- add gruvbox
+  { "ellisonleao/gruvbox.nvim" },
+
+  -- Configure LazyVim to load gruvbox
+  {
+    "LazyVim/LazyVim",
+    opts = {
+      colorscheme = "gruvbox",
+    },
+  },
+
+  -- change trouble config
+  {
+    "folke/trouble.nvim",
+    -- opts will be merged with the parent spec
+    opts = { use_diagnostic_signs = true },
+  },
+
+  -- disable trouble
+  { "folke/trouble.nvim", enabled = false },
+
+  -- override nvim-cmp and add cmp-emoji
+  {
+    "hrsh7th/nvim-cmp",
+    dependencies = { "hrsh7th/cmp-emoji" },
+    ---@param opts cmp.ConfigSchema
+    opts = function(_, opts)
+      table.insert(opts.sources, { name = "emoji" })
+    end,
+  },
+
+  -- change some telescope options and a keymap to browse plugin files
+  {
+    "nvim-telescope/telescope.nvim",
+    keys = {
+      -- add a keymap to browse plugin files
+      -- stylua: ignore
+      {
+        "<leader>fp",
+        function() require("telescope.builtin").find_files({ cwd = require("lazy.core.config").options.root }) end,
+        desc = "Find Plugin File",
+      },
+    },
+    -- change some options
+    opts = {
+      defaults = {
+        layout_strategy = "horizontal",
+        layout_config = { prompt_position = "top" },
+        sorting_strategy = "ascending",
+        winblend = 0,
+      },
+    },
+  },
+
+  -- add pyright to lspconfig
+  {
+    "neovim/nvim-lspconfig",
+    ---@class PluginLspOpts
+    opts = {
+      ---@type lspconfig.options
+      servers = {
+        -- pyright will be automatically installed with mason and loaded with lspconfig
+        pyright = {},
+      },
+    },
+  },
+
+  -- add tsserver and setup with typescript.nvim instead of lspconfig
+  {
+    "neovim/nvim-lspconfig",
+    dependencies = {
+      "jose-elias-alvarez/typescript.nvim",
+      init = function()
+        require("lazyvim.util").lsp.on_attach(function(_, buffer)
+          -- stylua: ignore
+          vim.keymap.set( "n", "<leader>co", "TypescriptOrganizeImports", { buffer = buffer, desc = "Organize Imports" })
+          vim.keymap.set("n", "<leader>cR", "TypescriptRenameFile", { desc = "Rename File", buffer = buffer })
+        end)
+      end,
+    },
+    ---@class PluginLspOpts
+    opts = {
+      ---@type lspconfig.options
+      servers = {
+        -- tsserver will be automatically installed with mason and loaded with lspconfig
+        tsserver = {},
+      },
+      -- you can do any additional lsp server setup here
+      -- return true if you don't want this server to be setup with lspconfig
+      ---@type table<string, fun(server:string, opts:_.lspconfig.options):boolean?>
+      setup = {
+        -- example to setup with typescript.nvim
+        tsserver = function(_, opts)
+          require("typescript").setup({ server = opts })
+          return true
+        end,
+        -- Specify * to use this function as a fallback for any server
+        -- ["*"] = function(server, opts) end,
+      },
+    },
+  },
+
+  -- for typescript, LazyVim also includes extra specs to properly setup lspconfig,
+  -- treesitter, mason and typescript.nvim. So instead of the above, you can use:
+  { import = "lazyvim.plugins.extras.lang.typescript" },
+
+  -- add more treesitter parsers
+  {
+    "nvim-treesitter/nvim-treesitter",
+    opts = {
+      ensure_installed = {
+        "bash",
+        "html",
+        "javascript",
+        "json",
+        "lua",
+        "markdown",
+        "markdown_inline",
+        "python",
+        "query",
+        "regex",
+        "tsx",
+        "typescript",
+        "vim",
+        "yaml",
+      },
+    },
+  },
+
+  -- since `vim.tbl_deep_extend`, can only merge tables and not lists, the code above
+  -- would overwrite `ensure_installed` with the new value.
+  -- If you'd rather extend the default config, use the code below instead:
+  {
+    "nvim-treesitter/nvim-treesitter",
+    opts = function(_, opts)
+      -- add tsx and treesitter
+      vim.list_extend(opts.ensure_installed, {
+        "tsx",
+        "typescript",
+      })
+    end,
+  },
+
+  -- the opts function can also be used to change the default opts:
+  {
+    "nvim-lualine/lualine.nvim",
+    event = "VeryLazy",
+    opts = function(_, opts)
+      table.insert(opts.sections.lualine_x, {
+        function()
+          return "😄"
+        end,
+      })
+    end,
+  },
+
+  -- or you can return new options to override all the defaults
+  {
+    "nvim-lualine/lualine.nvim",
+    event = "VeryLazy",
+    opts = function()
+      return {
+        --[[add your custom lualine config here]]
+      }
+    end,
+  },
+
+  -- use mini.starter instead of alpha
+  { import = "lazyvim.plugins.extras.ui.mini-starter" },
+
+  -- add jsonls and schemastore packages, and setup treesitter for json, json5 and jsonc
+  { import = "lazyvim.plugins.extras.lang.json" },
+
+  -- add any tools you want to have installed below
+  {
+    "williamboman/mason.nvim",
+    opts = {
+      ensure_installed = {
+        "stylua",
+        "shellcheck",
+        "shfmt",
+        "flake8",
+      },
+    },
+  },
+}
+-- ~/.config/nvim/lua/plugins/extra.lua
+return {
+  -- Tmux navigation (<C-h>, <C-j>, <C-k>, <C-l>)
+  {
+    "christoomey/vim-tmux-navigator",
+    cmd = {
+      "TmuxNavigateLeft",
+      "TmuxNavigateDown",
+      "TmuxNavigateUp",
+      "TmuxNavigateRight",
+      "TmuxNavigatePrevious",
+    },
+  },
+
+  -- Compiler.nvim (F6 / S-F7)
+  {
+    "Zeioth/compiler.nvim",
+    cmd = { "CompilerOpen", "CompilerToggleResults", "CompilerRedo" },
+    dependencies = { "stevearc/overseer.nvim" },
+    opts = {},
+  },
+}
+-- ~/.config/nvim/lua/plugins/colorscheme.lua
+return {
+  {
+    "catppuccin/nvim",
+    name = "catppuccin",
+    priority = 1000,
+    opts = {
+      flavour = "mocha", -- comută pe mocha / macchiato / frappe / latte
+    },
+  },
+  {
+    "LazyVim/LazyVim",
+    opts = {
+      colorscheme = "catppuccin",
+    },
+  },
+}
+# 💤 LazyVim
+
+A starter template for [LazyVim](https://github.com/LazyVim/LazyVim).
+Refer to the [documentation](https://lazyvim.github.io/installation) to get started.
+"$schema" = 'https://starship.rs/config-schema.json'
+
+format = """
+[](red)\
+$os\
+$username\
+[](bg:peach fg:red)\
+$directory\
+[](bg:yellow fg:peach)\
+$git_branch\
+$git_status\
+[](fg:yellow bg:green)\
+$c\
+$rust\
+$golang\
+$nodejs\
+$bun\
+$php\
+$java\
+$kotlin\
+$haskell\
+$python\
+[](fg:green bg:sapphire)\
+$conda\
+[](fg:sapphire bg:lavender)\
+$time\
+[ ](fg:lavender)\
+$cmd_duration\
+$line_break\
+$character"""
+
+palette = 'catppuccin_mocha'
+
+[os]
+disabled = false
+style = "bg:red fg:crust"
+
+[os.symbols]
+Windows = ""
+Ubuntu = "󰕈"
+SUSE = ""
+Raspbian = "󰐿"
+Mint = "󰣭"
+Macos = "󰀵"
+Manjaro = ""
+Linux = "󰌽"
+Gentoo = "󰣨"
+Fedora = "󰣛"
+Alpine = ""
+Amazon = ""
+Android = ""
+AOSC = ""
+Arch = "󰣇"
+Artix = "󰣇"
+CentOS = ""
+Debian = "󰣚"
+Redhat = "󱄛"
+RedHatEnterprise = "󱄛"
+
+[username]
+show_always = true
+style_user = "bg:red fg:crust"
+style_root = "bg:red fg:crust"
+format = '[ $user]($style)'
+
+[directory]
+style = "bg:peach fg:crust"
+format = "[ $path ]($style)"
+truncation_length = 3
+truncation_symbol = "…/"
+
+[directory.substitutions]
+"Documents" = "󰈙 "
+"Downloads" = " "
+"Music" = "󰝚 "
+"Pictures" = " "
+"Developer" = "󰲋 "
+
+[git_branch]
+symbol = ""
+style = "bg:yellow"
+format = '[[ $symbol $branch ](fg:crust bg:yellow)]($style)'
+
+[git_status]
+style = "bg:yellow"
+format = '[[($all_status$ahead_behind )](fg:crust bg:yellow)]($style)'
+
+[nodejs]
+symbol = ""
+style = "bg:green"
+format = '[[ $symbol( $version) ](fg:crust bg:green)]($style)'
+
+[bun]
+symbol = ""
+style = "bg:green"
+format = '[[ $symbol( $version) ](fg:crust bg:green)]($style)'
+
+[c]
+symbol = " "
+style = "bg:green"
+format = '[[ $symbol( $version) ](fg:crust bg:green)]($style)'
+
+[rust]
+symbol = ""
+style = "bg:green"
+format = '[[ $symbol( $version) ](fg:crust bg:green)]($style)'
+
+[golang]
+symbol = ""
+style = "bg:green"
+format = '[[ $symbol( $version) ](fg:crust bg:green)]($style)'
+
+[php]
+symbol = ""
+style = "bg:green"
+format = '[[ $symbol( $version) ](fg:crust bg:green)]($style)'
+
+[java]
+symbol = " "
+style = "bg:green"
+format = '[[ $symbol( $version) ](fg:crust bg:green)]($style)'
+
+[kotlin]
+symbol = ""
+style = "bg:green"
+format = '[[ $symbol( $version) ](fg:crust bg:green)]($style)'
+
+[haskell]
+symbol = ""
+style = "bg:green"
+format = '[[ $symbol( $version) ](fg:crust bg:green)]($style)'
+
+[python]
+symbol = ""
+style = "bg:green"
+format = '[[ $symbol( $version)(\(#$virtualenv\)) ](fg:crust bg:green)]($style)'
+
+[docker_context]
+symbol = ""
+style = "bg:sapphire"
+format = '[[ $symbol( $context) ](fg:crust bg:sapphire)]($style)'
+
+[conda]
+symbol = "  "
+style = "fg:crust bg:sapphire"
+format = '[$symbol$environment ]($style)'
+ignore_base = false
+
+[time]
+disabled = false
+time_format = "%R"
+style = "bg:lavender"
+format = '[[  $time ](fg:crust bg:lavender)]($style)'
+
+[line_break]
+disabled = false
+
+[character]
+disabled = false
+success_symbol = '[❯](bold fg:green)'
+error_symbol = '[❯](bold fg:red)'
+vimcmd_symbol = '[❮](bold fg:green)'
+vimcmd_replace_one_symbol = '[❮](bold fg:lavender)'
+vimcmd_replace_symbol = '[❮](bold fg:lavender)'
+vimcmd_visual_symbol = '[❮](bold fg:yellow)'
+
+[cmd_duration]
+show_milliseconds = true
+format = " in $duration "
+style = "bg:lavender"
+disabled = false
+show_notifications = true
+min_time_to_notify = 45000
+
+[palettes.catppuccin_mocha]
+rosewater = "#f5e0dc"
+flamingo = "#f2cdcd"
+pink = "#f5c2e7"
+mauve = "#cba6f7"
+red = "#f38ba8"
+maroon = "#eba0ac"
+peach = "#fab387"
+yellow = "#f9e2af"
+green = "#a6e3a1"
+teal = "#94e2d5"
+sky = "#89dceb"
+sapphire = "#74c7ec"
+blue = "#89b4fa"
+lavender = "#b4befe"
+text = "#cdd6f4"
+subtext1 = "#bac2de"
+subtext0 = "#a6adc8"
+overlay2 = "#9399b2"
+overlay1 = "#7f849c"
+overlay0 = "#6c7086"
+surface2 = "#585b70"
+surface1 = "#45475a"
+surface0 = "#313244"
+base = "#1e1e2e"
+mantle = "#181825"
+crust = "#11111b"
+
+[palettes.catppuccin_frappe]
+rosewater = "#f2d5cf"
+flamingo = "#eebebe"
+pink = "#f4b8e4"
+mauve = "#ca9ee6"
+red = "#e78284"
+maroon = "#ea999c"
+peach = "#ef9f76"
+yellow = "#e5c890"
+green = "#a6d189"
+teal = "#81c8be"
+sky = "#99d1db"
+sapphire = "#85c1dc"
+blue = "#8caaee"
+lavender = "#babbf1"
+text = "#c6d0f5"
+subtext1 = "#b5bfe2"
+subtext0 = "#a5adce"
+overlay2 = "#949cbb"
+overlay1 = "#838ba7"
+overlay0 = "#737994"
+surface2 = "#626880"
+surface1 = "#51576d"
+surface0 = "#414559"
+base = "#303446"
+mantle = "#292c3c"
+crust = "#232634"
+
+[palettes.catppuccin_latte]
+rosewater = "#dc8a78"
+flamingo = "#dd7878"
+pink = "#ea76cb"
+mauve = "#8839ef"
+red = "#d20f39"
+maroon = "#e64553"
+peach = "#fe640b"
+yellow = "#df8e1d"
+green = "#40a02b"
+teal = "#179299"
+sky = "#04a5e5"
+sapphire = "#209fb5"
+blue = "#1e66f5"
+lavender = "#7287fd"
+text = "#4c4f69"
+subtext1 = "#5c5f77"
+subtext0 = "#6c6f85"
+overlay2 = "#7c7f93"
+overlay1 = "#8c8fa1"
+overlay0 = "#9ca0b0"
+surface2 = "#acb0be"
+surface1 = "#bcc0cc"
+surface0 = "#ccd0da"
+base = "#eff1f5"
+mantle = "#e6e9ef"
+crust = "#dce0e8"
+
+[palettes.catppuccin_macchiato]
+rosewater = "#f4dbd6"
+flamingo = "#f0c6c6"
+pink = "#f5bde6"
+mauve = "#c6a0f6"
+red = "#ed8796"
+maroon = "#ee99a0"
+peach = "#f5a97f"
+yellow = "#eed49f"
+green = "#a6da95"
+teal = "#8bd5ca"
+sky = "#91d7e3"
+sapphire = "#7dc4e4"
+blue = "#8aadf4"
+lavender = "#b7bdf8"
+text = "#cad3f5"
+subtext1 = "#b8c0e0"
+subtext0 = "#a5adcb"
+overlay2 = "#939ab7"
+overlay1 = "#8087a2"
+overlay0 = "#6e738d"
+surface2 = "#5b6078"
+surface1 = "#494d64"
+surface0 = "#363a4f"
+base = "#24273a"
+mantle = "#1e2030"
+crust = "#181926"
+[env]
+TERM = "xterm-256color"
+
+[window]
+title = "Alacritty"
+startup_mode = "Fullscreen"
+padding = { x = 10, y = 10 }
+
+[window.dimensions]
+columns = 160
+lines = 80
+
+[cursor.style]
+shape = "Beam"
+blinking = "Never"
+
+[font]
+size = 16.0
+
+[font.normal]
+family = "IosevkaTerm Nerd Font"
+style = "Regular"
+
+[font.bold]
+family = "IosevkaTerm Nerd Font"
+style = "Bold"
+
+[font.italic]
+family = "IosevkaTerm Nerd Font"
+style = "Italic"
+
+[colors.primary]
+background = "#1e1e2e"
+foreground = "#cdd6f4"
+dim_foreground = "#7f849c"
+bright_foreground = "#cdd6f4"
+
+[colors.cursor]
+text = "#1e1e2e"
+cursor = "#f5e0dc"
+
+[colors.vi_mode_cursor]
+text = "#1e1e2e"
+cursor = "#b4befe"
+
+[colors.search.matches]
+foreground = "#1e1e2e"
+background = "#a6adc8"
+
+[colors.search.focused_match]
+foreground = "#1e1e2e"
+background = "#a6e3a1"
+
+[colors.footer_bar]
+foreground = "#1e1e2e"
+background = "#a6adc8"
+
+[colors.hints.start]
+foreground = "#1e1e2e"
+background = "#f9e2af"
+
+[colors.hints.end]
+foreground = "#1e1e2e"
+background = "#a6adc8"
+
+[colors.selection]
+text = "#1e1e2e"
+background = "#f5e0dc"
+
+[colors.normal]
+black = "#45475a"
+red = "#f38ba8"
+green = "#a6e3a1"
+yellow = "#f9e2af"
+blue = "#89b4fa"
+magenta = "#f5c2e7"
+cyan = "#94e2d5"
+white = "#bac2de"
+
+[colors.bright]
+black = "#585b70"
+red = "#f38ba8"
+green = "#a6e3a1"
+yellow = "#f9e2af"
+blue = "#89b4fa"
+magenta = "#f5c2e7"
+cyan = "#94e2d5"
+white = "#a6adc8"
+
+[[colors.indexed_colors]]
+index = 16
+color = "#fab387"
+
+[[colors.indexed_colors]]
+index = 17
+color = "#f5e0dc"
+# Dracula theme for Alacritty
+# https://draculatheme.com/alacritty
+#
+# Color palette
+# https://spec.draculatheme.com
+#
+# Instructions
+# https://github.com/alacritty/alacritty/blob/master/extra/man/alacritty.5.scd
+
+[colors.primary]
+
+background = "#282a36"
+foreground = "#f8f8f2"
+bright_foreground = "#ffffff"
+
+[colors.cursor]
+
+text = "#282a36"
+cursor = "#f8f8f2"
+
+[colors.vi_mode_cursor]
+
+text = "CellBackground"
+cursor = "CellForeground"
+
+[colors.selection]
+
+text = "CellForeground"
+background = "#44475a"
+
+[colors.normal]
+
+black = "#21222c"
+red = "#ff5555"
+green = "#50fa7b"
+yellow = "#f1fa8c"
+blue = "#bd93f9"
+magenta = "#ff79c6"
+cyan = "#8be9fd"
+white = "#f8f8f2"
+
+[colors.bright]
+
+black = "#6272a4"
+red = "#ff6e6e"
+green = "#69ff94"
+yellow = "#ffffa5"
+blue = "#d6acff"
+magenta = "#ff92df"
+cyan = "#a4ffff"
+white = "#ffffff"
+
+[colors.search.matches]
+
+foreground = "#44475a"
+background = "#50fa7b"
+
+[colors.search.focused_match]
+
+foreground = "#44475a"
+background = "#ffb86c"
+
+[colors.footer_bar]
+
+background = "#282a36"
+foreground = "#f8f8f2"
+
+[colors.hints.start]
+
+foreground = "#282a36"
+background = "#f1fa8c"
+
+[colors.hints.end]
+
+foreground = "#f1fa8c"
+background = "#282a36"
+[keyboard]
+bindings = [
+  # Clipboard
+  { key = "V", mods = "Super", action = "Paste" },
+  { key = "S", mods = "Control|Shift", action = "Paste" },
+  { key = "C", mods = "Super", action = "Copy" },
+  { key = "Insert", mods = "Shift", action = "PasteSelection" },
+  # { key = "C", mods = "Control", action = "Copy" }, # commented out
+  { key = "V", mods = "Control", action = "Paste" },
+  { key = "Insert", mods = "Shift", action = "Paste" },
+
+  # Scrolling
+  { key = "Up", mods = "Control|Shift", action = "ScrollLineUp" },
+  { key = "Down", mods = "Control|Shift", action = "ScrollLineDown" },
+  { key = "K", mods = "Control|Shift", action = "ScrollLineUp" },
+  { key = "J", mods = "Control|Shift", action = "ScrollLineDown" },
+  { key = "PageUp", mods = "Control|Shift", action = "ScrollPageUp" },
+  { key = "PageDown", mods = "Control|Shift", action = "ScrollPageDown" },
+  { key = "Home", mods = "Control|Shift", action = "ScrollToTop" },
+  { key = "End", mods = "Control|Shift", action = "ScrollToBottom" },
+ # { key = "H", mods = "Control|Shift", action = "ShowScrollback" },
+
+  # Window management
+  { key = "F11", action = "ToggleFullscreen" },
+#  { key = "N", mods = "Super", action = "SpawnNewInstance" },
+#  { key = "W", mods = "Super", action = "Close" },
+#  { key = "Enter", mods = "Control|Shift", action = "SpawnNewInstance" },
+#  { key = "RightBracket", mods = "Control|Shift", action = "NextWindow" },
+#  { key = "LeftBracket", mods = "Control|Shift", action = "PreviousWindow" },
+#  { key = "F", mods = "Control|Shift", action = "MoveForward" },
+#  { key = "B", mods = "Control|Shift", action = "MoveBackward" },
+#  { key = "Grave", mods = "Control|Shift", action = "MoveToTop" },
+#  { key = "Key1", mods = "Control|Shift", action = "MoveToFirst" },
+#  { key = "Key2", mods = "Control|Shift", action = "MoveToSecond" },
+#  { key = "Key3", mods = "Control|Shift", action = "MoveToThird" },
+#  { key = "Key4", mods = "Control|Shift", action = "MoveToFourth" },
+#  { key = "Key5", mods = "Control|Shift", action = "MoveToFifth" },
+#  { key = "Key6", mods = "Control|Shift", action = "MoveToSixth" },
+#  { key = "Key7", mods = "Control|Shift", action = "MoveToSeventh" },
+#  { key = "Key8", mods = "Control|Shift", action = "MoveToEighth" },
+#  { key = "Key9", mods = "Control|Shift", action = "MoveToNinth" },
+#  { key = "Key0", mods = "Control|Shift", action = "MoveToTenth" },
+
+  # Tab management
+#  { key = "Right", mods = "Control|Shift", action = "NextTab" },
+#  { key = "Left", mods = "Control|Shift", action = "PreviousTab" },
+#  { key = "T", mods = "Control|Shift", action = "SpawnNewTab" },
+#  { key = "Q", mods = "Control|Shift", action = "CloseTab" },
+#  { key = "L", mods = "Control|Shift", action = "NextLayout" },
+#  { key = "Period", mods = "Control|Shift", action = "MoveTabForward" },
+#  { key = "Comma", mods = "Control|Shift", action = "MoveTabBackward" },
+
+  # Miscellaneous
+  { key = "Up", mods = "Control|Shift", action = "IncreaseFontSize" },
+  { key = "Down", mods = "Control|Shift", action = "DecreaseFontSize" },
+  { key = "Backspace", mods = "Control|Shift", action = "ResetFontSize" },
+]
