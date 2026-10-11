@@ -78,18 +78,8 @@ alias mkdir='mkdir -p'
 alias cls='clear'
 alias lg='lazygit'
 
-# Git helper
-alias gcom='git add . && git commit -m'
-
 # =======================================================
-# 4. FUNCTIONS (YAZI & GIT HELPERS)
-# =======================================================
-function lazyg --description 'Git add, commit and push'
-    git add . && git commit -m "$argv[1]" && git push
-end
-
-# =======================================================
-# 5. INTEGRATIONS & PROMPT
+# 4. INTEGRATIONS & PROMPT
 # =======================================================
 # Mise (se incarca primul pentru a asigura disponibilitatea uneltelor)
 if test -x ~/.local/bin/mise

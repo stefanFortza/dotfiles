@@ -122,3 +122,5 @@ command -v starship >/dev/null 2>&1 && eval "$(starship init zsh)"
 
 # External script configs (daca exista)
 [[ -f "$HOME/github/music-player-service/aliases.sh" ]] && source "$HOME/github/music-player-service/aliases.sh"
+
+. "$HOME/.local/share/../bin/env"

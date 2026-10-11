@@ -36,3 +36,5 @@ alias vim='nvim'
 alias vi='nvim'
 command -v zoxide >/dev/null 2>&1 && eval "$(zoxide init bash)"
 . "$HOME/.cargo/env"
+
+. "$HOME/.local/share/../bin/env"

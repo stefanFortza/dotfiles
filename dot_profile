@@ -25,3 +25,5 @@ add_to_path "/var/lib/snapd/snap/bin"
 unset -f add_to_path
 export PATH
 . "$HOME/.cargo/env"
+
+. "$HOME/.local/share/../bin/env"
