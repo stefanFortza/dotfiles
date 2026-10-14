@@ -9,9 +9,6 @@ path=(
   "$HOME/.cargo/bin"
   "$HOME/.opencode/bin"
   "$HOME/.pub-cache/bin"
-  "/usr/local/texlive/2024/bin/x86_64-linux"
-  "/var/lib/snapd/snap/bin"
-  "/snap/bin"
   $path
 )
 export PATH

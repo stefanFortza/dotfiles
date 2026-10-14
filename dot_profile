@@ -3,7 +3,6 @@
 # 1. Variabile globale de mediu
 export EDITOR="nvim"
 export VISUAL="nvim"
-export ANDROID_HOME="$HOME/Android/Sdk"
 
 # 2. Constructie curata PATH (fara duplicate hardcodate)
 add_to_path() {
@@ -14,13 +13,6 @@ add_to_path() {
 
 # Unelte locale si pachete
 add_to_path "$HOME/.local/bin"
-add_to_path "$HOME/.local/share/JetBrains/Toolbox/scripts"
-add_to_path "$HOME/.local/share/pnpm"
-add_to_path "$ANDROID_HOME/cmdline-tools/latest/bin"
-add_to_path "$ANDROID_HOME/platform-tools"
-add_to_path "/home/linuxbrew/.linuxbrew/bin"
-add_to_path "/home/linuxbrew/.linuxbrew/sbin"
-add_to_path "/var/lib/snapd/snap/bin"
 
 unset -f add_to_path
 export PATH

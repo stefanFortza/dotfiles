@@ -38,3 +38,6 @@ command -v zoxide >/dev/null 2>&1 && eval "$(zoxide init bash)"
 . "$HOME/.cargo/env"
 
 . "$HOME/.local/share/../bin/env"
+
+# opencode
+export PATH=/home/stefantacu/.opencode/bin:$PATH

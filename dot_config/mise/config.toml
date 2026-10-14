@@ -32,3 +32,5 @@ activate_aggressive = true
 
 [env]
 PAGER = "bat --plain"
+
+
